@@ -2,6 +2,10 @@
 from Reader import read_data
 import pandas as pd
 def populate_nces_data(focus_data, sf_data):
+    for index, row in focus_data.iterrows():
+        district = row['SCHOOL_DISTRICT_NAME']
+        
+        
     # for r in focusList[]:
 #         ncesID = ''
 #         necsData = []
@@ -14,7 +18,7 @@ def populate_nces_data(focus_data, sf_data):
 #     end
 
 #     for nonMatches in FocusList[]:
-#         keepit as such with NCES info
+#         keepit as such without NCES info
 
 #     for nonMatches in SF with FocusList[]:
 #         goto DataStewards
@@ -26,14 +30,15 @@ def validate_focus_data(focus_data):
     # review data quality, 
     # validate data fields,
     # categorize issues. 
-    pass
+    return focus_data
 
 def process_data():
-    focus_file = 'DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv'
+    focus_file = 'domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv'
     focus_data = read_data( focus_file)
-    sf_file = 'DataFiles/SF_ACCOUNTS.csv'
-    sf_data = read_data( sf_file)
     validated_focus_data = validate_focus_data(focus_data)
+    
+    sf_file = 'domains/customer/DataFiles/SF_ACCOUNTS.csv'
+    sf_data = read_data( sf_file)
     populate_nces_data(validated_focus_data, sf_data)
 
 def takeNCESIDFromSF(merged_df,focus_only_df):
