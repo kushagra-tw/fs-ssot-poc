@@ -1,9 +1,17 @@
 
-from Reader import read_data
 import pandas as pd
+from Reader import read_data
+from FuzzyMatcher import name_matcher
+
 def populate_nces_data(focus_data, sf_data):
-    for index, row in focus_data.iterrows():
-        district = row['SCHOOL_DISTRICT_NAME']
+    focus_districts = focus_data[['SCHOOL_DISTRICT_NAME']]
+    for index, row in focus_districts.iterrows():
+        focus_district = row['SCHOOL_DISTRICT_NAME']
+        for index, sf_row in sf_data.iterrows():
+            sf_district = sf_row['NAME']
+            if (name_matcher(focus_district, sf_district)):
+                focus_data['NCES_ID'] = sf_row['NCES_ID__C']
+                break
         
         
     # for r in focusList[]:
