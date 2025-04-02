@@ -63,10 +63,10 @@ def create_geodataframe_from_lat_lon(df, lat_col='latitude', lon_col='longitude'
 
 # # Example usage:
 #
-# focus_file = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv'
+# focus_file = '/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv'
 # focus_data = pd.read_csv(focus_file, low_memory=False)
 #
-# nces_file = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv'
+# nces_file = '/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv'
 # nces_data = pd.read_csv(nces_file, low_memory=False)
 # # print(focus_data.columns)
 # # print(nces_data.columns)
@@ -75,16 +75,12 @@ def create_geodataframe_from_lat_lon(df, lat_col='latitude', lon_col='longitude'
 # nces_geodf = create_geodataframe_from_lat_lon(nces_data,lat_col='LAT',lon_col='LON')
 # # Example using left_on and right_on
 #
-# #
-# # gdf3 = create_geodataframe_from_lat_lon(df3)
-# # gdf4 = create_geodataframe_from_lat_lon(df4)
+
 # #
 # joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
 #                                                    left_lat='ADDRESS_LATITUDE', left_lon='ADDRESS_LONGITUDE', right_lat='LAT',
 #                                                    right_lon='LON', how='left', distance=50)
 #
-# #joined_gdf_by_column = join_geodataframes_by_location(gdf3, gdf4, how='left', distance=50, left_on='id3', right_on='id4')
-# print("\nJoined GeoDataFrame (distance 50m with id column):\n", joined_gdf.columns)
 # df_with_name_similarity = add_similarity_score(joined_gdf, 'SCHOOL_NAME', 'SCH_NAME', 'school_name_similarity_ratio')
 # # df_with_name_district_similarity = add_similarity_score(joined_gdf, 'SCHOOL_NAME', 'SCH_NAME', 'school_name_similarity_ratio')
 # print(df_with_name_similarity)
