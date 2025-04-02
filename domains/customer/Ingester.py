@@ -1,30 +1,18 @@
 
 import pandas as pd
 from Reader import read_data
-from FuzzyMatcher import name_matcher
+from NCES import add_NCES_info, fetch_NCES_Id_from_NCES
+from SF import fetch_NCES_Id_from_SF
 
-def populate_nces_data(focus_data, sf_data):
-    focus_districts = focus_data[['SCHOOL_DISTRICT_NAME']]
-    for index, row in focus_districts.iterrows():
-        focus_district = row['SCHOOL_DISTRICT_NAME']
-        for index, sf_row in sf_data.iterrows():
-            sf_district = sf_row['NAME']
-            if (name_matcher(focus_district, sf_district)):
-                focus_data['NCES_ID'] = sf_row['NCES_ID__C']
-                break
+def populate_nces_data(focus_data):
+    for index, focus_row in focus_data.iterrows():
+        focus_district = focus_row['SCHOOL_DISTRICT_NAME']
+        nces_id = fetch_NCES_Id_from_SF(focus_district)
+        if nces_id is None:
+            nces_id = fetch_NCES_Id_from_NCES(focus_district)            
+        if nces_id is not None:
+            add_NCES_info(nces_id, focus_row)
         
-        
-    # for r in focusList[]:
-#         ncesID = ''
-#         necsData = []
-#         if r.DistrictName in fuzzyMatchWithSF(r.DistrictName)
-#             ncesID = takeNCESIDFromSF(r.DistrictName)
-#         else
-#             ncesID = fuzzyMatchWithNCES(r.DistrictName)
-#         end
-#          ncesData = takeNCESData(ncesID)
-#     end
-
 #     for nonMatches in FocusList[]:
 #         keepit as such without NCES info
 
@@ -45,9 +33,8 @@ def process_data():
     focus_data = read_data( focus_file)
     validated_focus_data = validate_focus_data(focus_data)
     
-    sf_file = 'domains/customer/DataFiles/SF_ACCOUNTS.csv'
-    sf_data = read_data( sf_file)
-    populate_nces_data(validated_focus_data, sf_data)
+    
+    populate_nces_data(validated_focus_data)
 
 def takeNCESIDFromSF(merged_df,focus_only_df):
     """
