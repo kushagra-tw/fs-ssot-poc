@@ -3,16 +3,24 @@ import pandas as pd
 from Reader import read_data
 from NCES import add_NCES_info, fetch_NCES_Id_from_NCES
 from SF import fetch_NCES_Id_from_SF
+from FuzzyMatcher import name_matcher
 
-def populate_nces_data(focus_data):
-    for index, focus_row in focus_data.iterrows():
-        focus_district = focus_row['SCHOOL_DISTRICT_NAME']
-        nces_id = fetch_NCES_Id_from_SF(focus_district)
-        if nces_id is None:
-            nces_id = fetch_NCES_Id_from_NCES(focus_district)            
-        if nces_id is not None:
-            add_NCES_info(nces_id, focus_row)
-        
+def extract_NCES_Id_from_NCES(focus_data):
+    focus_data_without_NCES_Id = focus_data[focus_data['NCES_ID__C'].isna()]
+    focus_data_with_NCES_Id = focus_data_without_NCES_Id
+    return focus_data_with_NCES_Id
+
+def extract_NCES_Id_from_SF(focus_data, sf_data):
+    focus_data['matched_district_name'] = focus_data['SCHOOL_DISTRICT_NAME'].apply(lambda x: name_matcher(x, sf_data['NAME']))
+    focus_data = focus_data.merge(sf_data[['NAME', 'NCES_ID__C']], left_on='matched_district_name', right_on='NAME', how='left')
+    focus_data.drop(columns='matched_district_name', inplace=True)
+    return focus_data
+
+def populate_NCES_data(focus_data, sf_data):
+    focus_data_with_SF_match = extract_NCES_Id_from_SF(focus_data, sf_data)
+    focus_data_with_NCES_match = extract_NCES_Id_from_NCES(focus_data_with_SF_match)
+    focus_data = pd.concat([focus_data_with_SF_match, focus_data_with_NCES_match], ignore_index=True)
+    
 #     for nonMatches in FocusList[]:
 #         keepit as such without NCES info
 
@@ -29,12 +37,11 @@ def validate_focus_data(focus_data):
     return focus_data
 
 def process_data():
-    focus_file = 'domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv'
-    focus_data = read_data( focus_file)
+    focus_data = read_data('domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
     validated_focus_data = validate_focus_data(focus_data)
     
-    
-    populate_nces_data(validated_focus_data)
+    sf_data = read_data('domains/customer/DataFiles/SF_ACCOUNTS.csv')
+    populate_NCES_data(validated_focus_data, sf_data)
 
 def takeNCESIDFromSF(merged_df,focus_only_df):
     """
@@ -44,7 +51,7 @@ def takeNCESIDFromSF(merged_df,focus_only_df):
     :return: dataframe
     """
     focus_columns = focus_only_df.columns.to_list()
-    columns_to_be_included = focus_columns + ['NCES_ID__C']
+    columns_to_be_included = focus_columns + ['NCES_ID__C'] 
     merged_df = merged_df[columns_to_be_included]
     return merged_df
 
