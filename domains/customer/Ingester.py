@@ -39,13 +39,20 @@ def validate_focus_data(focus_data):
     # categorize issues. 
     return focus_data
 
+def filter_sf_data(sf_data):
+    sf_customer_type = ['Prospect','Customer']
+    filtered_sf_data = sf_data[sf_data['TYPE'].isin(sf_customer_type)]
+    return filtered_sf_data
+
+
 def process_data():
     focus_data = read_data('domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
     validated_focus_data = validate_focus_data(focus_data)
     
     sf_data = read_data('domains/customer/DataFiles/SF_ACCOUNTS.csv')
+    filtered_sf_data = filter_sf_data(sf_data)
     NCES_data = read_data('domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
-    populate_NCES_data(validated_focus_data, sf_data, NCES_data)
+    populate_NCES_data(validated_focus_data, filtered_sf_data, NCES_data)
 
 def takeNCESIDFromSF(merged_df,focus_only_df):
     """
