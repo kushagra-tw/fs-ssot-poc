@@ -6,7 +6,7 @@ from domains.customer.Ingester import filter_sf_data
 from domains.customer.Reader import read_data
 
 
-def compare_distinct_series(series1, series2, threshold=80, method=fuzz.ratio):
+def compare_distinct_sd_series(series1, series2, threshold=80, method=fuzz.ratio):
     """
     Compares distinct values between two pandas Series using fuzzy matching.
 
@@ -21,16 +21,40 @@ def compare_distinct_series(series1, series2, threshold=80, method=fuzz.ratio):
                       that have a similarity score above the threshold, along with
                       their similarity score.
     """
-    distinct_series1 = series1.astype(str).unique()
+    distinct_series1 = series1.astype(str).str.lower().str.strip().unique()
     print("series1 "+ str(len(distinct_series1)))
-    distinct_series2 = series2.astype(str).unique()
+    distinct_series2 = series2.astype(str).str.lower().str.strip().unique()
     print("series2 "+ str(len(distinct_series2)))
 
     comparison_data = []
 
     for val1 in tqdm(distinct_series1, desc=f"Comparing distinct values from '{series1.name}'"):
         for val2 in distinct_series2:
-            similarity_score = method(val1, val2)
+
+            phrase_to_check1 = 'public schools'
+            phrase_to_check2 = 'school district'
+            phrase_to_check3 = 'consolidated school district'
+            phrase_to_check4 = 'unified school district'
+            phrase_to_check5 = 'township school district'
+            modified_str1 = None
+            modified_str2 = None
+            if phrase_to_check5 in val1.lower() and phrase_to_check5 in val2.lower():
+                modified_str1 = val1.lower().replace(phrase_to_check5.lower(), '').strip()
+                modified_str2 = val2.lower().replace(phrase_to_check5.lower(), '').strip()
+            elif phrase_to_check3 in val1.lower() and phrase_to_check3 in val2.lower():
+                modified_str1 = val1.lower().replace(phrase_to_check3.lower(), '').strip()
+                modified_str2 = val2.lower().replace(phrase_to_check3.lower(), '').strip()
+            elif phrase_to_check4 in val1.lower() and phrase_to_check4 in val2.lower():
+                modified_str1 = val1.lower().replace(phrase_to_check4.lower(), '').strip()
+                modified_str2 = val2.lower().replace(phrase_to_check4.lower(), '').strip()
+            elif phrase_to_check1 in val1.lower() and phrase_to_check1 in val2.lower():
+                modified_str1 = val1.lower().replace(phrase_to_check1.lower(), '').strip()
+                modified_str2 = val2.lower().replace(phrase_to_check1.lower(), '').strip()
+            elif phrase_to_check2 in val1.lower() and phrase_to_check2 in val2.lower():
+                modified_str1 = val1.lower().replace(phrase_to_check2.lower(), '').strip()
+                modified_str2 = val2.lower().replace(phrase_to_check2.lower(), '').strip()
+
+            similarity_score = method(modified_str1, modified_str2)
             if similarity_score >= threshold:
                 comparison_data.append({
                     f"{series1.name}": val1,
@@ -59,12 +83,12 @@ def compare_distinct_series(series1, series2, threshold=80, method=fuzz.ratio):
 #     return pd.DataFrame(linked_records)
 
 # Example Usage (same as before)
-focus_data = read_data(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
-# validated_focus_data = validate_focus_data(focus_data)
-
-sf_data = read_data('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
-filtered_sf_data = filter_sf_data(sf_data)
+# focus_data = read_data(
+#     '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
+# # validated_focus_data = validate_focus_data(focus_data)
+#
+# sf_data = read_data('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
+# filtered_sf_data = filter_sf_data(sf_data)
 # data1 = {'id': [1, 2, 3],
 #          'name': ["Apple Inc.", "Google LLC", "Microsoft Corporation"]}
 # df1 = pd.DataFrame(data1)
@@ -79,21 +103,21 @@ filtered_sf_data = filter_sf_data(sf_data)
 # print(linked_df)
 
 # Assuming 'focus_data' has a column named 'SCHOOL_DISTRICT_NAME'
-focus_series = focus_data['SCHOOL_DISTRICT_NAME']
-focus_series.name = 'FOCUS_DISTRICT'  # Give the series a name for better output
+# focus_series = focus_data['SCHOOL_DISTRICT_NAME']
+# focus_series.name = 'FOCUS_DISTRICT'  # Give the series a name for better output
+#
+# # Assuming 'filtered_sf_data' has a column named 'NAME'
+# sf_series = filtered_sf_data['NAME']
+# sf_series.name = 'SF_DISTRICT'  # Give the series a name for better output
 
-# Assuming 'filtered_sf_data' has a column named 'NAME'
-sf_series = filtered_sf_data['NAME']
-sf_series.name = 'SF_ACCOUNT_NAME'  # Give the series a name for better output
+# compared_df = compare_distinct_sd_series(focus_series, sf_series, threshold=65, method=fuzz.ratio).sort_values(by='similarity_score')
 
-compared_df = compare_distinct_series(focus_series, sf_series, threshold=85, method=fuzz.ratio)
-
-print("\nComparison of Distinct Series:")
-print(compared_df.columns)
-print(len(compared_df))
-print(len(compared_df['FOCUS_DISTRICT'].unique()))
-compared_df.to_csv(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/output_fuzzy_sd.csv', index=False)
+# print("\nComparison of Distinct Series:")
+# print(compared_df.columns)
+# print(len(compared_df))
+# print(len(compared_df['FOCUS_DISTRICT'].unique()))
+# compared_df.to_csv(
+#     '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/output_fuzzy_sd.csv', index=False)
 
 # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 #     print("--- Full DataFrame Output ---")
