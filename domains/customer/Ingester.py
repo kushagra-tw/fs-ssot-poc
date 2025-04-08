@@ -76,7 +76,7 @@ def validate_focus_data(focus_data):
     return focus_data
 
 def filter_sf_data(sf_data):
-    sf_customer_type = ['Prospect','Customer']
+    sf_customer_type = ['Former Customer','Customer']
     filtered_sf_data = sf_data[sf_data['TYPE'].isin(sf_customer_type)]
     return filtered_sf_data
 
