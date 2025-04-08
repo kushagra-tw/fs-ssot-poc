@@ -5,7 +5,7 @@ from domains.customer.Ingester import filter_sf_data
 from domains.customer.Reader import read_data
 from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join_geodataframes_by_lat_lon_columns
 from domains.customer.name_similarity import add_similarity_score
-from domains.customer.sample_test_fuzzy import compare_distinct_sd_series
+from domains.customer.sample_test_fuzzy import compare_distinct_sd_series_focus_sf
 
 focus_data = read_data(
     '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
@@ -28,7 +28,7 @@ focus_series = focus_data['FOCUS_SCHOOL_DISTRICT_NAME']
 focus_series.name = 'FOCUS_DISTRICT'
 sf_series = sf_data['SF_NAME']
 sf_series.name = 'SF_DISTRICT'
-focus_sf_mapped_df = compare_distinct_sd_series(focus_series, sf_series, threshold=75, method=fuzz.ratio).sort_values(by='similarity_score')
+focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75, method=fuzz.ratio).sort_values(by='similarity_score')
 print(len(focus_sf_mapped_df['FOCUS_DISTRICT']))
 
 focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
@@ -36,7 +36,7 @@ focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
                      left_on='focus_temp_district_name',
                      right_on='FOCUS_DISTRICT',
                      how='left')
-print(len(focus_with_mapping['FOCUS_DISTRICT'].unique()))
+print("focus matches found with sf" + str(len(focus_with_mapping['FOCUS_DISTRICT'].unique())))
 
 sf_data['sf_temp_district_name'] = sf_data['SF_NAME'].astype(str).str.lower().str.strip()
 focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
@@ -72,12 +72,17 @@ joined_gdf_no_nces_id = join_geodataframes_by_lat_lon_columns(focus_geodf_no_nce
 
 focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
+sim_sn_focus_df = add_similarity_score(complete_focus_df, 'FOCUS_SCHOOL_NAME', 'NCES_SCH_NAME',
+                                                           'focus_nces_school_name_similarity')
+final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NAME', 'NCES_NAME',
+                                                           'focus_nces_district_name_similarity')
+final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
+#3 - match by school name between focus and nces and get the similarity score of the districts between them
+#
+#SF_NCES_ID__C, NCES_SCHID blank  NCES_ZIP.1 FOCUS_POSTAL_CODE
 
 
-
-
-#3 - name match focus and nces where there is not lat long based match
-complete_focus_df.to_csv('op.csv')
+final_focus_df.to_csv('op.csv')
 
 
 
