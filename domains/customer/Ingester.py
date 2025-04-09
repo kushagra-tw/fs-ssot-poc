@@ -6,7 +6,7 @@ from SF import fetch_NCES_Id_from_SF
 from FuzzyMatcher import name_matcher
 from domains.customer.fuzzy_matcher_new import fuzzy_join_with_apply
 from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join_geodataframes_by_lat_lon_columns
-from domains.customer.name_similarity import add_similarity_score
+from domains.customer.name_similarity_scoring import add_similarity_score
 
 
 def extract_NCES_Id_from_NCES(focus_data, NCES_data):
