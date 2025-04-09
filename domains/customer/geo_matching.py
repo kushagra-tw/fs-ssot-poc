@@ -37,16 +37,24 @@ def join_geodataframes_by_lat_lon_columns(gdf1, gdf2, left_lat='lat1', left_lon=
 
     # Perform spatial join based on distance
     joined_gdf = gpd.sjoin_nearest(gdf1, gdf2, how=how, max_distance=distance)
+    # gdf1["_tempkey"] = gdf1.apply(lambda row: row['FOCUS_STATE'], axis=1)
+    # gdf2["_tempkey"] = gdf2.apply(lambda row: row['NCES_STATE'], axis=1)
+    # print(gdf1.head(10))
+    # joined_gdf = gdf1.merge(gdf2, on="_tempkey", how="inner").drop("_tempkey", axis=1)
 
     joined_gdf['actual_distance_m'] = joined_gdf.apply(
         lambda row: geodesic((row[left_lat], row[left_lon]), (row[right_lat], row[right_lon])).meters, axis=1
     )
 
+    # print(joined_gdf.head(10))
+
+    nearest_candidates = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= distance)]
+
     # Remove temporary geometry columns
     gdf1.drop(columns=['geometry'], inplace=True)
     gdf2.drop(columns=['geometry'], inplace=True)
 
-    return joined_gdf
+    return nearest_candidates
 
 def create_geodataframe_from_lat_lon(df, lat_col='latitude', lon_col='longitude', crs='EPSG:4326'):
     """
