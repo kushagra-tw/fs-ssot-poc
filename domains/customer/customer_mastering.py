@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
+
 import pandas as pd
 from rapidfuzz import fuzz
 
@@ -14,44 +17,44 @@ def filter_sf_data(sf_data):
 
 
 focus_data = read_data(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
+    '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
 focus_data = focus_data.add_prefix('FOCUS_')
 
-sf_file_data = read_data('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
-sf_data = filter_sf_data(sf_file_data)
-sf_data = sf_data.add_prefix('SF_')
+# sf_file_data = read_data('/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
+# sf_data = filter_sf_data(sf_file_data)
+# sf_data = sf_data.add_prefix('SF_')
 
 nces_data = read_data(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
+    '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
 nces_data = nces_data.add_prefix('NCES_')
 
 # 1 ============= focus sf merge ===========
 
-focus_series = focus_data['FOCUS_SCHOOL_DISTRICT_NAME']
-focus_series.name = 'FOCUS_DISTRICT'
-sf_series = sf_data['SF_NAME']
-sf_series.name = 'SF_DISTRICT'
-focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75,
-                                                         method=fuzz.ratio)
+# focus_series = focus_data['FOCUS_SCHOOL_DISTRICT_NAME']
+# focus_series.name = 'FOCUS_DISTRICT'
+# sf_series = sf_data['SF_NAME']
+# sf_series.name = 'SF_DISTRICT'
+# focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75,
+#                                                          method=fuzz.ratio)
 
-focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
-focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
-                              left_on='focus_temp_district_name',
-                              right_on='FOCUS_DISTRICT',
-                              how='left')
-print("focus matches found with sf" + str(len(focus_with_mapping['FOCUS_DISTRICT'].unique())))
+# focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
+# focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
+#                               left_on='focus_temp_district_name',
+#                               right_on='FOCUS_DISTRICT',
+#                               how='left')
+# print("focus matches found with sf" + str(len(focus_with_mapping['FOCUS_DISTRICT'].unique())))
 
-sf_data['sf_temp_district_name'] = sf_data['SF_NAME'].astype(str).str.lower().str.strip()
-focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
-                          left_on='FOCUS_DISTRICT',
-                          right_on='sf_temp_district_name',
-                          how='left')
-focus_sf_merge['is_focus_sf_merge'] = focus_sf_merge['sf_temp_district_name'].notna()
+# sf_data['sf_temp_district_name'] = sf_data['SF_NAME'].astype(str).str.lower().str.strip()
+# focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
+#                           left_on='FOCUS_DISTRICT',
+#                           right_on='sf_temp_district_name',
+#                           how='left')
+# focus_sf_merge['is_focus_sf_merge'] = focus_sf_merge['sf_temp_district_name'].notna()
 
 # 2 ====== focus + nces on geo match
 
 # focus_data_no_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].isna()]
-focus_geodf = create_geodataframe_from_lat_lon(focus_sf_merge, lat_col='FOCUS_ADDRESS_LATITUDE',
+focus_geodf = create_geodataframe_from_lat_lon(focus_data, lat_col='FOCUS_ADDRESS_LATITUDE',
                                                lon_col='FOCUS_ADDRESS_LONGITUDE')
 nces_geodf = create_geodataframe_from_lat_lon(nces_data, lat_col='NCES_LAT', lon_col='NCES_LON')
 
@@ -59,7 +62,7 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
                                                    left_lat='FOCUS_ADDRESS_LATITUDE',
                                                    left_lon='FOCUS_ADDRESS_LONGITUDE',
                                                    right_lat='NCES_LAT',
-                                                   right_lon='NCES_LON', how='left', distance=50)
+                                                   right_lon='NCES_LON', how='left', distance=500)
 
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
@@ -75,6 +78,13 @@ final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_STATE', 'NCES_STATE
                                       'focus_nces_state_name_similarity')
 final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
 
+# Pick "best guess" school
+final_focus_df = \
+    final_focus_df.sort_values(
+        by=['FOCUS_SCHOOL_ID','focus_nces_school_name_similarity'],
+        ascending=False
+    ).groupby('FOCUS_SCHOOL_ID').first()
+
 # reorder to push all sf columns at the end
 all_columns = final_focus_df.columns.tolist()
 
@@ -85,4 +95,4 @@ new_column_order = other_cols + sf_cols
 
 final_focus_df = final_focus_df[new_column_order]
 
-final_focus_df.to_csv('op.csv')
+final_focus_df.to_csv('op_6.csv')
