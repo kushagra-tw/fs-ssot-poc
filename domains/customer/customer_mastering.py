@@ -33,7 +33,6 @@ sf_series = sf_data['SF_NAME']
 sf_series.name = 'SF_DISTRICT'
 focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75,
                                                          method=fuzz.ratio)
-print(len(focus_sf_mapped_df['FOCUS_DISTRICT']))
 
 focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
 focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
@@ -50,8 +49,6 @@ focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
 focus_sf_merge['is_focus_sf_merge'] = focus_sf_merge['sf_temp_district_name'].notna()
 
 # 2 ====== focus + nces on geo match
-print(len(focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]))
-print(len(focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].isna()]))
 
 # focus_data_no_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].isna()]
 focus_geodf = create_geodataframe_from_lat_lon(focus_sf_merge, lat_col='FOCUS_ADDRESS_LATITUDE',
@@ -73,6 +70,9 @@ final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NA
                                       'focus_nces_district_name_similarity')
 final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_CITY', 'NCES_CITY',
                                       'focus_nces_city_name_similarity')
+# FOCUS_STATE NCES_STATE
+final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_STATE', 'NCES_STATE',
+                                      'focus_nces_state_name_similarity')
 final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
 
 # reorder to push all sf columns at the end
