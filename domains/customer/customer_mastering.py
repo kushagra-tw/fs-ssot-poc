@@ -27,31 +27,31 @@ nces_data = nces_data.add_prefix('NCES_')
 
 # 1 ============= focus sf merge ===========
 
-focus_series = focus_data['FOCUS_SCHOOL_DISTRICT_NAME']
-focus_series.name = 'FOCUS_DISTRICT'
-sf_series = sf_data['SF_NAME']
-sf_series.name = 'SF_DISTRICT'
-focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75,
-                                                         method=fuzz.ratio)
-
-focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
-focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
-                              left_on='focus_temp_district_name',
-                              right_on='FOCUS_DISTRICT',
-                              how='left')
-print("focus matches found with sf" + str(len(focus_with_mapping['FOCUS_DISTRICT'].unique())))
-
-sf_data['sf_temp_district_name'] = sf_data['SF_NAME'].astype(str).str.lower().str.strip()
-focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
-                          left_on='FOCUS_DISTRICT',
-                          right_on='sf_temp_district_name',
-                          how='left')
-focus_sf_merge['is_focus_sf_merge'] = focus_sf_merge['sf_temp_district_name'].notna()
+# focus_series = focus_data['FOCUS_SCHOOL_DISTRICT_NAME']
+# focus_series.name = 'FOCUS_DISTRICT'
+# sf_series = sf_data['SF_NAME']
+# sf_series.name = 'SF_DISTRICT'
+# focus_sf_mapped_df = compare_distinct_sd_series_focus_sf(focus_series, sf_series, threshold=75,
+#                                                          method=fuzz.ratio)
+#
+# focus_data['focus_temp_district_name'] = focus_data['FOCUS_SCHOOL_DISTRICT_NAME'].astype(str).str.lower().str.strip()
+# focus_with_mapping = pd.merge(focus_data, focus_sf_mapped_df,
+#                               left_on='focus_temp_district_name',
+#                               right_on='FOCUS_DISTRICT',
+#                               how='left')
+# print("focus matches found with sf" + str(len(focus_with_mapping['FOCUS_DISTRICT'].unique())))
+#
+# sf_data['sf_temp_district_name'] = sf_data['SF_NAME'].astype(str).str.lower().str.strip()
+# focus_sf_merge = pd.merge(focus_with_mapping, sf_data,
+#                           left_on='FOCUS_DISTRICT',
+#                           right_on='sf_temp_district_name',
+#                           how='left')
+# focus_sf_merge['is_focus_sf_merge'] = focus_sf_merge['sf_temp_district_name'].notna()
 
 # 2 ====== focus + nces on geo match
 
 # focus_data_no_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].isna()]
-focus_geodf = create_geodataframe_from_lat_lon(focus_sf_merge, lat_col='FOCUS_ADDRESS_LATITUDE',
+focus_geodf = create_geodataframe_from_lat_lon(focus_data, lat_col='FOCUS_ADDRESS_LATITUDE',
                                                lon_col='FOCUS_ADDRESS_LONGITUDE')
 nces_geodf = create_geodataframe_from_lat_lon(nces_data, lat_col='NCES_LAT', lon_col='NCES_LON')
 
