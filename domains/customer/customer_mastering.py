@@ -62,7 +62,7 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
                                                    left_lat='FOCUS_ADDRESS_LATITUDE',
                                                    left_lon='FOCUS_ADDRESS_LONGITUDE',
                                                    right_lat='NCES_LAT',
-                                                   right_lon='NCES_LON', how='left', distance=500)
+                                                   right_lon='NCES_LON', how='left', distance=100)
 
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
@@ -77,6 +77,11 @@ final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_CITY', 'NCES_CITY',
 final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_STATE', 'NCES_STATE',
                                       'focus_nces_state_name_similarity')
 final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
+
+final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] >= 60)]
+final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School"]
+
+
 
 # Pick "best guess" school
 final_focus_df = \
@@ -95,4 +100,6 @@ new_column_order = other_cols + sf_cols
 
 final_focus_df = final_focus_df[new_column_order]
 
-final_focus_df.to_csv('op_6.csv')
+print(f"Matched {final_focus_df.shape[0]} records!")
+
+final_focus_df.to_csv('op_10.csv')
