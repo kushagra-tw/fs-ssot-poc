@@ -2,9 +2,33 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 from geopy.distance import geodesic
+import numpy as np
 
 from domains.customer.name_similarity_scoring import add_similarity_score
 
+def ensure_same_and_projected_crs(gdf1, gdf2, target_crs='EPSG:32633'): # Example: UTM Zone 33N (meters)
+    """
+    Ensures both GeoDataFrames have the same CRS and projects them to a target projected CRS.
+
+    Args:
+        gdf1 (GeoDataFrame): The first GeoDataFrame.
+        gdf2 (GeoDataFrame): The second GeoDataFrame.
+        target_crs (str): The target projected CRS (e.g., 'EPSG:32633' for meters).
+
+    Returns:
+        tuple: The reprojected GeoDataFrames (gdf1, gdf2).
+    """
+    if gdf1.crs is None:
+        gdf1.crs = 'EPSG:4326'  # Assume WGS 84 if no CRS is set
+    if gdf2.crs is None:
+        gdf2.crs = 'EPSG:4326'  # Assume WGS 84 if no CRS is set
+
+    if gdf1.crs != target_crs:
+        gdf1 = gdf1.to_crs(target_crs)
+    if gdf2.crs != target_crs:
+        gdf2 = gdf2.to_crs(target_crs)
+
+    return gdf1, gdf2
 
 def join_geodataframes_by_lat_lon_columns(gdf1, gdf2, left_lat='lat1', left_lon='lon1', right_lat='lat2', right_lon='lon2', how='inner', distance=50):
     """
@@ -27,20 +51,24 @@ def join_geodataframes_by_lat_lon_columns(gdf1, gdf2, left_lat='lat1', left_lon=
     gdf1['geometry'] = gpd.points_from_xy(gdf1[left_lon], gdf1[left_lat])
     gdf2['geometry'] = gpd.points_from_xy(gdf2[right_lon], gdf2[right_lat])
 
-    # Ensure both GeoDataFrames have the same CRS. If not, reproject.
-    if gdf1.crs != gdf2.crs:
-        if gdf1.crs is None:
-          gdf1.crs = 'EPSG:4326' #or whatever CRS is appropriate
-        if gdf2.crs is None:
-          gdf2.crs = 'EPSG:4326' #or whatever CRS is appropriate
-        gdf2 = gdf2.to_crs(gdf1.crs)
+    # Ensure both GeoDataFrames are in the same projected CRS (e.g., UTM for meters)
+    gdf1, gdf2 = ensure_same_and_projected_crs(gdf1, gdf2)
 
-    # Perform spatial join based on distance
-    joined_gdf = gpd.sjoin_nearest(gdf1, gdf2, how=how, max_distance=distance)
+    # Perform spatial join based on distance (now in meters)
+    joined_gdf = gpd.sjoin_nearest(gdf1, gdf2, how=how, max_distance=distance, lsuffix='_left', rsuffix='_right')
 
-    joined_gdf['actual_distance_m'] = joined_gdf.apply(
-        lambda row: geodesic((row[left_lat], row[left_lon]), (row[right_lat], row[right_lon])).meters, axis=1
-    )
+    # Calculate the actual geodesic distance between the original lat/lon points, handling NaNs
+    def calculate_geodesic_distance(row):
+        lat1 = row[left_lat]
+        lon1 = row[left_lon]
+        lat2 = row[right_lat]
+        lon2 = row[right_lon]
+        if np.isnan(lat1) or np.isnan(lon1) or np.isnan(lat2) or np.isnan(lon2):
+            return np.nan  # Return NaN if any coordinate is NaN
+        else:
+            return geodesic((lat1, lon1), (lat2, lon2)).meters
+
+    joined_gdf['actual_distance_m'] = joined_gdf.apply(calculate_geodesic_distance, axis=1)
 
     # Remove temporary geometry columns
     gdf1.drop(columns=['geometry'], inplace=True)

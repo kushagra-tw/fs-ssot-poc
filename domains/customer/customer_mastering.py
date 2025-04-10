@@ -59,7 +59,7 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
                                                    left_lat='FOCUS_ADDRESS_LATITUDE',
                                                    left_lon='FOCUS_ADDRESS_LONGITUDE',
                                                    right_lat='NCES_LAT',
-                                                   right_lon='NCES_LON', how='left', distance=50)
+                                                   right_lon='NCES_LON', how='left', distance=500)
 
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
