@@ -2,6 +2,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 from geopy.distance import geodesic
+import numpy as np
 
 from domains.customer.name_similarity_scoring import add_similarity_score
 
@@ -56,9 +57,17 @@ def join_geodataframes_by_lat_lon_columns(gdf1, gdf2, left_lat='lat1', left_lon=
 
     joined_gdf = gpd.sjoin_nearest(gdf1, gdf2, how=how, max_distance=distance)
 
-    joined_gdf['actual_distance_m'] = joined_gdf.apply(
-        lambda row: geodesic((row[left_lat], row[left_lon]), (row[right_lat], row[right_lon])).meters, axis=1
-    )
+    def calculate_geodesic_distance(row):
+        lat1 = row[left_lat]
+        lon1 = row[left_lon]
+        lat2 = row[right_lat]
+        lon2 = row[right_lon]
+        if np.isnan(lat1) or np.isnan(lon1) or np.isnan(lat2) or np.isnan(lon2):
+            return np.nan  # Return NaN if any coordinate is NaN
+        else:
+            return geodesic((lat1, lon1), (lat2, lon2)).meters
+
+    joined_gdf['actual_distance_m'] = joined_gdf.apply(calculate_geodesic_distance, axis=1)
 
     # print(joined_gdf.head(10))
 

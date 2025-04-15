@@ -79,7 +79,7 @@ final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_STATE', 'NCES_STATE
 final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
 
 final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] >= 60)]
-final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School"]
+final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | (final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School")]
 
 
 
