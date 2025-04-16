@@ -1,5 +1,3 @@
-import pandas as pd
-from rapidfuzz import fuzz
 
 from domains.customer.Reader import read_data
 from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join_geodataframes_by_lat_lon_columns
@@ -67,17 +65,14 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
 
-sim_sn_focus_df = add_similarity_score(joined_gdf, 'FOCUS_SCHOOL_NAME', 'NCES_SCH_NAME',
-                                       'focus_nces_school_name_similarity')
-final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NAME', 'NCES_NAME',
-                                      'focus_nces_district_name_similarity')
+
 columns_to_process = [
     'FOCUS_SCHOOL_DISTRICT_NAME',
     'NCES_NAME',
     'FOCUS_SCHOOL_NAME', # Add based on your actual columns
     'NCES_SCH_NAME'      # Add based on your actual columns
 ]
-normalized_df = normalize_dataframe_columns(final_focus_df, columns_to_process)
+normalized_df = normalize_dataframe_columns(joined_gdf, columns_to_process)
 columns_to_standardize = ['FOCUS_SCHOOL_DISTRICT_NAME_standardized', 'NCES_NAME_standardized']
 standardized_df = standardize_terms_in_school_district(normalized_df, columns_to_standardize)
 school_columns_to_standardize = ['FOCUS_SCHOOL_NAME_standardized','NCES_SCH_NAME_standardized']
@@ -88,9 +83,15 @@ standardized_df = standardize_school_names(standardized_df, school_columns_to_st
 # # 'NCES_NAME', 'NCES_NAME_normalized'
 # # print(normalized_df[['FOCUS_SCHOOL_NAME', 'FOCUS_SCHOOL_NAME_normalized',
 # #                      'NCES_SCH_NAME', 'NCES_SCH_NAME_normalized']].head())
-standardized_df.to_csv('standardized_columns.csv')
+# standardized_df.to_csv('standardized_columns.csv')
+#
+# exit()
 
-exit()
+sim_sn_focus_df = add_similarity_score(standardized_df, 'FOCUS_SCHOOL_NAME_standardized', 'NCES_SCH_NAME_standardized',
+                                       'focus_nces_school_name_similarity')
+final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NAME_standardized', 'NCES_NAME_standardized',
+                                      'focus_nces_district_name_similarity')
+
 final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_CITY', 'NCES_CITY',
                                       'focus_nces_city_name_similarity')
 # FOCUS_STATE NCES_STATE
