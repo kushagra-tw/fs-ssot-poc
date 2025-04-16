@@ -108,7 +108,7 @@ final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_
 names_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] < 60)]
 final_focus_df, quarantined_df = quarantine(final_focus_df, names_disagree_df, quarantined_df, "School names disagree")
 
-districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | (final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School")]
+districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] < 60) & (final_focus_df['NCES_SCH_TYPE_TEXT'] == "Regular School")]
 final_focus_df, quarantined_df = quarantine(final_focus_df, districts_disagree_df, quarantined_df, "District names disagree")
 
 
