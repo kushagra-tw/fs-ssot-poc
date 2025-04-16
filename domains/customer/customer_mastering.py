@@ -15,6 +15,23 @@ def filter_sf_data(sf_data):
     filtered_sf_data = sf_data[sf_data['TYPE'].isin(sf_customer_type)]
     return filtered_sf_data
 
+def setsubtract(df1, df2):
+    outer_joined_df = df1.merge(df2, how="outer", indicator=True, on="FOCUS_SCHOOL_ID", suffixes=[None, '_to_drop'])
+    return outer_joined_df[(outer_joined_df._merge == 'left_only')] \
+        .drop('_merge', axis = 1) \
+        .drop([column + "_to_drop" for column in df2.columns if "FOCUS_SCHOOL_ID" not in column + ""], axis=1)
+
+def quarantine(df, df_to_quarantine, quarantine_df, quarantine_reason):
+
+    subtracted_df = setsubtract(df, df_to_quarantine)
+
+    df_to_quarantine["quarantine_reason"] = quarantine_reason
+
+    quarantine_df = pd.concat([quarantine_df, df_to_quarantine])
+
+    return subtracted_df, quarantine_df
+
+
 
 focus_data = read_data(
     '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
@@ -53,19 +70,29 @@ nces_data = nces_data.add_prefix('NCES_')
 
 # 2 ====== focus + nces on geo match
 
+canada_state_abbvs = ['AB', 'BC', 'MB', 'NB', 'NL', 'NT', 'NS', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
+canada_records = focus_data.loc[(focus_data['FOCUS_STATE'].isin(canada_state_abbvs))]
+focus_data, quarantined_df = quarantine(focus_data, canada_records, pd.DataFrame(), "Canada")
+
 # focus_data_no_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].isna()]
 focus_geodf = create_geodataframe_from_lat_lon(focus_data, lat_col='FOCUS_ADDRESS_LATITUDE',
                                                lon_col='FOCUS_ADDRESS_LONGITUDE')
 nces_geodf = create_geodataframe_from_lat_lon(nces_data, lat_col='NCES_LAT', lon_col='NCES_LON')
 
+DISTANCE = 100
+
 joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
                                                    left_lat='FOCUS_ADDRESS_LATITUDE',
                                                    left_lon='FOCUS_ADDRESS_LONGITUDE',
                                                    right_lat='NCES_LAT',
-                                                   right_lon='NCES_LON', how='left', distance=100)
+                                                   right_lon='NCES_LON', how='left', distance=DISTANCE)
+lonely_schools = setsubtract(joined_gdf, focus_geodf)
+joined_gdf, quarantined_df = quarantine(joined_gdf, lonely_schools, quarantined_df, "No nearby candidate schools")
 
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
+
+joined_gdf = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= DISTANCE)]
 
 sim_sn_focus_df = add_similarity_score(joined_gdf, 'FOCUS_SCHOOL_NAME', 'NCES_SCH_NAME',
                                        'focus_nces_school_name_similarity')
@@ -78,9 +105,11 @@ final_focus_df = add_similarity_score(final_focus_df, 'FOCUS_STATE', 'NCES_STATE
                                       'focus_nces_state_name_similarity')
 final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_focus_df['NCES_ZIP'])
 
-final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] >= 60)]
-final_focus_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | (final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School")]
+names_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] < 60)]
+final_focus_df, quarantined_df = quarantine(final_focus_df, names_disagree_df, quarantined_df, "School names disagree")
 
+districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] >= 60) | (final_focus_df['NCES_SCH_TYPE_TEXT'] != "Regular School")]
+final_focus_df, quarantined_df = quarantine(final_focus_df, districts_disagree_df, quarantined_df, "District names disagree")
 
 
 # Pick "best guess" school
@@ -102,4 +131,5 @@ final_focus_df = final_focus_df[new_column_order]
 
 print(f"Matched {final_focus_df.shape[0]} records!")
 
-final_focus_df.to_csv('op_10.csv')
+final_focus_df.to_csv('schools_11.csv')
+quarantined_df.to_csv('quarantined_schools_11.csv')

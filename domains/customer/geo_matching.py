@@ -71,13 +71,11 @@ def join_geodataframes_by_lat_lon_columns(gdf1, gdf2, left_lat='lat1', left_lon=
 
     # print(joined_gdf.head(10))
 
-    nearest_candidates = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= distance)]
-
     # Remove temporary geometry columns
     gdf1.drop(columns=['geometry'], inplace=True)
     gdf2.drop(columns=['geometry'], inplace=True)
 
-    return nearest_candidates
+    return joined_gdf
 
 def create_geodataframe_from_lat_lon(df, lat_col='latitude', lon_col='longitude', crs='EPSG:4326'):
     """
