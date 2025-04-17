@@ -108,7 +108,8 @@ final_focus_df['zip_code_match'] = final_focus_df['FOCUS_POSTAL_CODE'].eq(final_
 names_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_school_name_similarity'] < 60)]
 final_focus_df, quarantined_df = quarantine(final_focus_df, names_disagree_df, quarantined_df, "School names disagree")
 
-districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] < 60) & (final_focus_df['NCES_SCH_TYPE_TEXT'] == "Regular School")]
+#filter out where school district names don't match (provided there is a school district in nces; second conditional is a null-check)
+districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] < 60) & (final_focus_df['NCES_LEAID'] == final_focus_df['NCES_LEAID'])]
 final_focus_df, quarantined_df = quarantine(final_focus_df, districts_disagree_df, quarantined_df, "District names disagree")
 
 
@@ -131,5 +132,5 @@ final_focus_df = final_focus_df[new_column_order]
 
 print(f"Matched {final_focus_df.shape[0]} records!")
 
-final_focus_df.to_csv('schools_11.csv')
-quarantined_df.to_csv('quarantined_schools_11.csv')
+final_focus_df.to_csv('outputs/schools/schools_0417_2.csv')
+quarantined_df.to_csv('outputs/schools/quarantined_schools_0417_2.csv')
