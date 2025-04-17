@@ -8,6 +8,7 @@ from domains.customer.Reader import read_data
 from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join_geodataframes_by_lat_lon_columns
 from domains.customer.name_similarity_scoring import add_similarity_score
 from domains.customer.fuzzy_name_merge import compare_distinct_sd_series_focus_sf
+from domains.customer.standardize_school_terms import standardize_school_names
 
 
 def filter_sf_data(sf_data):
@@ -94,7 +95,14 @@ joined_gdf, quarantined_df = quarantine(joined_gdf, lonely_schools, quarantined_
 
 joined_gdf = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= DISTANCE)]
 
-sim_sn_focus_df = add_similarity_score(joined_gdf, 'FOCUS_SCHOOL_NAME', 'NCES_SCH_NAME',
+standardized_names_df = standardize_school_names(joined_gdf, ["FOCUS_SCHOOL_NAME", "NCES_SCH_NAME"])
+
+d = standardized_names_df.loc[(standardized_names_df["FOCUS_SCHOOL_NAME"] != standardized_names_df["FOCUS_SCHOOL_NAME_standardized"])]
+print(d["FOCUS_SCHOOL_NAME"])
+print(d["FOCUS_SCHOOL_NAME_standardized"])
+
+
+sim_sn_focus_df = add_similarity_score(standardized_names_df, 'FOCUS_SCHOOL_NAME_standardized', 'NCES_SCH_NAME_standardized',
                                        'focus_nces_school_name_similarity')
 final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NAME', 'NCES_NAME',
                                       'focus_nces_district_name_similarity')
@@ -132,5 +140,5 @@ final_focus_df = final_focus_df[new_column_order]
 
 print(f"Matched {final_focus_df.shape[0]} records!")
 
-final_focus_df.to_csv('outputs/schools/schools_0417_2.csv')
-quarantined_df.to_csv('outputs/schools/quarantined_schools_0417_2.csv')
+final_focus_df.to_csv('outputs/schools/schools_0417_3.csv')
+quarantined_df.to_csv('outputs/schools/quarantined_schools_0417_3.csv')

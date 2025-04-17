@@ -135,12 +135,18 @@ def standardize_school_names(df, cols_to_standardize):
     ]
 
     for col in cols_to_standardize:
+        
         if col not in df_standardized.columns:
             print(f"Warning: Column '{col}' not found in DataFrame. Skipping.")
             continue
 
+        std_col = col + "_standardized"
+
+        df_standardized[std_col] = df_standardized.apply(lambda row: row[col].lower(), axis=1)
+
+
         # Ensure working with strings, handle potential NaN/None values
-        df_standardized[col] = df_standardized[col].fillna('').astype(str)
+        df_standardized[std_col] = df_standardized[std_col].fillna('').astype(str)
 
         # Pre-processing within function (optional, depends on prior steps)
         # Example: Replace '/' if not handled before mapping 'jr/sr'
@@ -149,20 +155,20 @@ def standardize_school_names(df, cols_to_standardize):
         # 1. Expand abbreviations (Multiple passes for potential chaining)
         for _ in range(2):
             for abbr, full in abbreviation_map.items():
-                df_standardized[col] = df_standardized[col].str.replace(abbr, full, regex=True)
+                df_standardized[std_col] = df_standardized[std_col].str.replace(abbr, full, regex=True)
 
         # 2. Remove common terms (Multiple passes)
         for _ in range(2):
             for term in terms_to_remove:
                 # Pad with spaces for whole word matching, handle start/end cases
-                df_standardized[col] = df_standardized[col].str.replace(f' {term} ', ' ', regex=True)
-                df_standardized[col] = df_standardized[col].str.replace(fr'^{term}\s+', '', regex=True)
-                df_standardized[col] = df_standardized[col].str.replace(fr'\s+{term}$', '', regex=True)
-                df_standardized[col] = df_standardized[col].str.replace(fr'^{term}$', '', regex=True) # Handle if term is the whole string
+                df_standardized[std_col] = df_standardized[std_col].str.replace(f' {term} ', ' ', regex=True)
+                df_standardized[std_col] = df_standardized[std_col].str.replace(fr'^{term}\s+', '', regex=True)
+                df_standardized[std_col] = df_standardized[std_col].str.replace(fr'\s+{term}$', '', regex=True)
+                df_standardized[std_col] = df_standardized[std_col].str.replace(fr'^{term}$', '', regex=True) # Handle if term is the whole string
 
         # 3. Final whitespace cleanup
-        df_standardized[col] = df_standardized[col].str.strip()
-        df_standardized[col] = df_standardized[col].str.replace(r'\s+', ' ', regex=True)
+        df_standardized[std_col] = df_standardized[std_col].str.strip()
+        df_standardized[std_col] = df_standardized[std_col].str.replace(r'\s+', ' ', regex=True)
 
         # 4. Optional: Handle possessive 's' (Use with extreme caution!)
         # This is risky as it might affect names like "st james's school" or plurals like "arts"
