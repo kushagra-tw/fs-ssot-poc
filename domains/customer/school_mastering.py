@@ -1,4 +1,8 @@
 import sys
+
+from domains.customer.normalize_names import normalize_dataframe_columns
+from domains.customer.standardize_district_terms import standardize_terms_in_school_district
+
 sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
 
 import pandas as pd
@@ -32,10 +36,10 @@ def quarantine(df, df_to_quarantine, quarantine_df, quarantine_reason):
 
     return subtracted_df, quarantine_df
 
+BASE_PATH = '/Users/kirtanshah/Documents/'
 
-
-focus_data = read_data(
-    '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
+focus_data = read_data(BASE_PATH +
+    'DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
 focus_data = focus_data.add_prefix('FOCUS_')
 
 # sf_file_data = read_data('/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
@@ -43,8 +47,9 @@ focus_data = focus_data.add_prefix('FOCUS_')
 # sf_data = sf_data.add_prefix('SF_')
 
 nces_data = read_data(
-    '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
+    BASE_PATH +'DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
 nces_data = nces_data.add_prefix('NCES_')
+
 
 # 1 ============= focus sf merge ===========
 
@@ -94,8 +99,18 @@ joined_gdf, quarantined_df = quarantine(joined_gdf, lonely_schools, quarantined_
 # complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
 
 joined_gdf = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= DISTANCE)]
-
-standardized_names_df = standardize_school_names(joined_gdf, ["FOCUS_SCHOOL_NAME", "NCES_SCH_NAME"])
+columns_to_process = [
+    'FOCUS_SCHOOL_DISTRICT_NAME',
+    'NCES_NAME',
+    'FOCUS_SCHOOL_NAME', # Add based on your actual columns
+    'NCES_SCH_NAME'      # Add based on your actual columns
+]
+normalized_df = normalize_dataframe_columns(joined_gdf, columns_to_process)
+columns_to_standardize = ['FOCUS_SCHOOL_DISTRICT_NAME_standardized', 'NCES_NAME_standardized']
+standardized_names_df = standardize_terms_in_school_district(normalized_df, columns_to_standardize)
+school_columns_to_standardize = ['FOCUS_SCHOOL_NAME_standardized','NCES_SCH_NAME_standardized']
+standardized_names_df = standardize_school_names(standardized_names_df, school_columns_to_standardize)
+# standardized_names_df = standardize_school_names(joined_gdf, ["FOCUS_SCHOOL_NAME", "NCES_SCH_NAME"])
 
 d = standardized_names_df.loc[(standardized_names_df["FOCUS_SCHOOL_NAME"] != standardized_names_df["FOCUS_SCHOOL_NAME_standardized"])]
 print(d["FOCUS_SCHOOL_NAME"])
@@ -120,6 +135,9 @@ final_focus_df, quarantined_df = quarantine(final_focus_df, names_disagree_df, q
 districts_disagree_df = final_focus_df.loc[(final_focus_df['focus_nces_district_name_similarity'] < 60) & (final_focus_df['NCES_LEAID'] == final_focus_df['NCES_LEAID'])]
 final_focus_df, quarantined_df = quarantine(final_focus_df, districts_disagree_df, quarantined_df, "District names disagree")
 
+
+# focus_to_nces_multiple_matches_df = final_focus_df.groupby('nces_id').filter(lambda x: x['FOCUS_SCHOOL_ID'].nunique() > 1)
+# final_focus_df, quarantined_df = quarantine(final_focus_df, focus_to_nces_multiple_matches_df, quarantined_df, "Multiple Focus Schools matched with single NCES school")
 
 # Pick "best guess" school
 final_focus_df = \
