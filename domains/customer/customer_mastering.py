@@ -23,8 +23,15 @@ agreeing_customers.columns.values[0] = "FOCUS_SCHOOL_DISTRICT_ID"
 full_customer_df = schools_df.filter(items=[
         "FOCUS_SCHOOL_DISTRICT_ID",
         "NCES_LEAID",
+        "NCES_SCHID"
         'FOCUS_SCHOOL_DISTRICT_NAME', 
         'NCES_NAME',
+        "NCES_LEAID",
+        "NCES_NAME",
+        "NCES_STATE.1",
+        "NCES_CITY.1",
+        "NCES_STREET.1",
+        "NCES_ZIP.1"
     ], axis=1).loc[(schools_df["FOCUS_SCHOOL_DISTRICT_ID"].isin(agreeing_customers["FOCUS_SCHOOL_DISTRICT_ID"]))] \
     .loc[(schools_df["NCES_LEAID"] == schools_df["NCES_LEAID"])] \
     .drop_duplicates() \
