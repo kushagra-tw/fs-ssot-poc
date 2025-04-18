@@ -13,17 +13,18 @@ def filter_sf_data(sf_data):
     filtered_sf_data = sf_data[sf_data['TYPE'].isin(sf_customer_type)]
     return filtered_sf_data
 
+BASE_PATH = '/Users/kirtanshah/Documents/'
 
-focus_data = read_data(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
+focus_data = read_data( BASE_PATH +
+    'DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
 focus_data = focus_data.add_prefix('FOCUS_')
 
-sf_file_data = read_data('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/SF_ACCOUNTS.csv')
+sf_file_data = read_data(BASE_PATH + 'DataFiles/SF_ACCOUNTS.csv')
 sf_data = filter_sf_data(sf_file_data)
 sf_data = sf_data.add_prefix('SF_')
 
 nces_data = read_data(
-    '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/domains/customer/DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
+    BASE_PATH +'DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
 nces_data = nces_data.add_prefix('NCES_')
 
 # 1 ============= focus sf merge ===========
@@ -109,4 +110,4 @@ new_column_order = other_cols + sf_cols
 
 final_focus_df = final_focus_df[new_column_order]
 
-final_focus_df.to_csv('op.csv')
+final_focus_df.to_csv(BASE_PATH +  'op.csv')
