@@ -71,28 +71,28 @@ def standardize_school_names(df, cols_to_standardize):
     # Removing longer phrases first can be slightly more robust
     terms_to_remove = [
         # Full types (often redundant after mapping)
-        r'\bjúnior senior high school\b', # Use unicode or handle accents if needed
-        r'\bsenior high school\b',
-        r'\bjunior high school\b', # If jr maps here
-        r'\bmiddle school\b',
-        r'\belementary school\b',
-        r'\bsecondary school\b',
+        #r'\bjúnior senior high school\b', # Use unicode or handle accents if needed
+        #r'\bsenior high school\b',
+        #r'\bjunior high school\b', # If jr maps here
+        #r'\bmiddle school\b',
+        #r'\belementary school\b',
+        #r'\bsecondary school\b',
         r'\bpublic school\b',
-        r'\bcharter school\b',
+        #r'\bcharter school\b',
         # Base types/levels (use with caution)
-        r'\bhigh\b',             # Careful: removes 'high' from 'highland' if not bounded
-        r'\bmiddle\b',
-        r'\belementary\b',
-        r'\bjunior\b',
-        r'\bsenior\b',
-        r'\bupper\b',
-        r'\blower\b',
-        r'\bintermediate\b',
-        r'\bkindergarten\b',
-        r'\bk8\b',
-        r'\bk12\b',
+        # r'\bhigh\b',             # Careful: removes 'high' from 'highland' if not bounded
+        # r'\bmiddle\b',
+        # r'\belementary\b',
+        # r'\bjunior\b',
+        # r'\bsenior\b',
+        # r'\bupper\b',
+        # r'\blower\b',
+        # r'\bintermediate\b',
+        # r'\bkindergarten\b',
+        # r'\bk8\b',
+        # r'\bk12\b',
         # Common descriptors & types
-        r'\bmagnet\b',
+        #r'\bmagnet\b',
         r'\bacademy\b',
         r'\bpreparatory\b',
         r'\binstitute\b',
@@ -103,16 +103,16 @@ def standardize_school_names(df, cols_to_standardize):
         r'\bschools\b',
         r'\bschool\b',           # Usually safe to remove after mapping types
         # Religious/Affiliation
-        r'\bcatholic\b',
-        r'\blutheran\b',
-        r'\bchristian\b',
-        r'\bfriends\b',          # e.g., buckingham friends school
-        r'\bchurch\b',           # e.g., bryn athyn church school
+        # r'\bcatholic\b',
+        # r'\blutheran\b',
+        # r'\bchristian\b',
+        # r'\bfriends\b',          # e.g., buckingham friends school
+        # r'\bchurch\b',           # e.g., bryn athyn church school
         # Organizational/Location/Misc
         r'\bregional\b',
-        r'\btechnical\b',
-        r'\bvocational\b',
-        r'\bcharter\b',          # If not part of 'charter school'
+        #r'\btechnical\b',
+        #r'\bvocational\b',
+        #r'\bcharter\b',          # If not part of 'charter school'
         r'\bcooperative\b',
         r'\bpublic\b',           # If not part of 'public school'
         r'\bof\b',               # Remove 'of' (e.g., 'school of the arts')
@@ -121,15 +121,15 @@ def standardize_school_names(df, cols_to_standardize):
         r'\bat\b',               # e.g., rise academy at van sickle
         # Specific phrases/qualifiers from file
         r'\bschool for\b',       # e.g., school for the deaf
-        r'\bdeaf\b',             # If always part of a descriptor phrase
-        r'\bblind\b',            # If relevant
-        r'\barts and sciences\b',
-        r'\bexpeditionary learning\b',
+        # r'\bdeaf\b',             # If always part of a descriptor phrase
+        # r'\bblind\b',            # If relevant
+        # r'\barts and sciences\b',
+        # r'\bexpeditionary learning\b',
         r'\bacademic center\b',
-        r'\bearly learning center\b',
-        r'\bcontinuation\b',
-        r'\bpost secondary\b',
-        r'\bspecial education\b', # Added from district example if relevant
+        # r'\bearly learning center\b',
+        # r'\bcontinuation\b',
+        # r'\bpost secondary\b',
+        # r'\bspecial education\b', # Added from district example if relevant
         # Potential Org/District remnants (Use cautiously)
         # r'\bksd\b', r'\bks\b', r'\bcvusd\b' # Uncomment/add carefully if needed
     ]
@@ -153,7 +153,7 @@ def standardize_school_names(df, cols_to_standardize):
         # df_standardized[col] = df_standardized[col].str.replace('/', ' ', regex=False)
 
         # 1. Expand abbreviations (Multiple passes for potential chaining)
-        for _ in range(2):
+        for _ in range(1):
             for abbr, full in abbreviation_map.items():
                 df_standardized[std_col] = df_standardized[std_col].str.replace(abbr, full, regex=True)
 

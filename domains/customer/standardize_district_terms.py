@@ -68,26 +68,24 @@ def standardize_terms_in_school_district(df, cols_to_standardize):
         r"\bschools\b",
         r"\bpublic\b",
         r"\bdistrict\b",
-        # Expanded terms from abbreviations
         r"\bcentral\b",
         r"\bconsolidated\b",
         r"\bcommunity\b",
         r"\bindependent\b",
-        r"\bhigh school\b",
+        #r"\bhigh school\b",
         r"\bregional\b",
-        r"\belementary\b",
-        r"\bspecial education\b",
-        r"\bcharter school\b",
-        r"\bcooperative\b",
-        r"\bschool administrative unit\b",
-        r"\bborough\b",
-        r"\bheights\b",
-        # Newly added terms
+        #r"\belementary\b",
+        #r"\bspecial education\b",
+        #r"\bcharter school\b",
+        #r"\bcooperative\b",
+        #r"\bschool administrative unit\b",
+        #r"\bborough\b",
+        #r"\bheights\b",
         r"\bcity\b",
         r"\bmetropolitan\b",
         r"\barea\b",
-        r"\bcharter\b", # Remove 'charter' alone if 'charter school' wasn't caught
-        r"\bof the city of\b", # Specific phrase removal
+        #r"\bcharter\b",
+        r"\bof the city of\b"
     ]
 
     for col in cols_to_standardize:
@@ -96,7 +94,7 @@ def standardize_terms_in_school_district(df, cols_to_standardize):
 
         # Apply the abbreviation mapping (Iterate multiple times for chained cases like CUSD -> CONSOLIDATED UNIFIED SD -> CONSOLIDATED UNIFIED SCHOOL DISTRICT)
         # A simple loop might be sufficient for common cases, but complex chains might need more sophisticated handling. Let's add a simple loop (e.g., twice)
-        for _ in range(2):  # Apply mapping twice to handle potential chained replacements
+        for _ in range(1):  # Apply mapping twice to handle potential chained replacements
             for abbr, full_term in abbreviation_map.items():
                 df_standardized[col] = df_standardized[col].str.replace(abbr, full_term, regex=True)
 
