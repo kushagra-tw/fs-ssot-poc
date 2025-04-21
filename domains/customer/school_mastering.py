@@ -130,10 +130,6 @@ school_columns_to_standardize = ['FOCUS_SCHOOL_NAME_standardized','NCES_SCH_NAME
 standardized_names_df = standardize_school_names(standardized_names_df, school_columns_to_standardize)
 # standardized_names_df = standardize_school_names(joined_gdf, ["FOCUS_SCHOOL_NAME", "NCES_SCH_NAME"])
 
-d = standardized_names_df.loc[(standardized_names_df["FOCUS_SCHOOL_NAME"] != standardized_names_df["FOCUS_SCHOOL_NAME_standardized"])]
-print(d["FOCUS_SCHOOL_NAME"])
-print(d["FOCUS_SCHOOL_NAME_standardized"])
-
 
 sim_sn_focus_df = add_similarity_score(standardized_names_df, 'FOCUS_SCHOOL_NAME_standardized', 'NCES_SCH_NAME_standardized',
                                        'focus_nces_school_name_similarity')
@@ -164,8 +160,24 @@ final_focus_df = \
     final_focus_df.sort_values(
         by=['FOCUS_SCHOOL_ID','focus_nces_school_name_similarity'],
         ascending=False
-    ).groupby('FOCUS_SCHOOL_ID').first()
+    ).groupby('FOCUS_SCHOOL_ID', as_index=False).first()
 
+nces_count_df = final_focus_df.filter(items=["NCES_NCESSCH", "FOCUS_SCHOOL_ID"], axis=1) \
+    .groupby("NCES_NCESSCH", as_index=False) \
+    .nunique() \
+
+nces_count_df = nces_count_df.loc[(nces_count_df["FOCUS_SCHOOL_ID"] > 1)]
+
+records_to_quarantine = final_focus_df.merge(
+    nces_count_df, on="NCES_NCESSCH", how="inner", suffixes=["", "_y"]
+)
+
+final_focus_df, quarantined_df = quarantine(
+    df=final_focus_df,
+    df_to_quarantine=records_to_quarantine,
+    quarantine_df=quarantined_df,
+    quarantine_reason="Suspected duplicate Focus school (multiple schools matched with this NCES id)"
+)
 
 # reorder to push all sf columns at the end
 all_columns = final_focus_df.columns.tolist()
@@ -190,4 +202,5 @@ sd_sim_average = final_focus_df['focus_nces_district_name_similarity'][final_foc
 print("Distance average " + str(actual_distance_average))
 print("focus_nces_school_name_similarity average " + str(school_sim_average))
 print("focus_nces_district_name_similarity average " + str(sd_sim_average))
-final_focus_df.to_csv('outputs/schools/schools_0421_1.csv')
+final_focus_df.to_csv('outputs/schools/schools_0421_2.csv')
+quarantined_df.to_csv('outputs/schools/quarantined_schools_0421_2.csv')
