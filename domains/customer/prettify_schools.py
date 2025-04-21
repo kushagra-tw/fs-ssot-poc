@@ -152,6 +152,7 @@ def school_prettifier(schools_file_path):
 
     print(reordered.head(10))
     return reordered
-    #reordered.to_csv('20250410_tw_schools.csv')
+    # reordered.to_csv('20250410_tw_schools.csv')
 
-school_prettifier('outputs/schools/schools_0421_1.csv')
+school_prettifier('outputs/schools/schools_0421_2.csv') \
+    .to_csv('outputs/schools/pretty_schools_0421_2.csv')

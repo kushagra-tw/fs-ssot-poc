@@ -59,9 +59,9 @@ def add_on_existing_db_ids(df, existing_db_df_path, intermediate_file_path):
         # tw_merged_df["clensed_nces_x"] = tw_merged_df.apply(
         #     lambda row: (row["MASTERPROPERTIES_NCESSCHOOLID_x"].zfill(13)[0:7] + row["MASTERPROPERTIES_NCESSCHOOLID_x"][-5:]) if len(row["MASTERPROPERTIES_NCESSCHOOLID_x"])>=12 else row["MASTERPROPERTIES_NCESSCHOOLID_x"], axis=1
         # )
-        tw_merged_df["clensed_nces_y"] = tw_merged_df.apply(
-            lambda row: str(row["MASTERPROPERTIES_NCESSCHOOLID_y"]).zfill(12) if len(row["MASTERPROPERTIES_NCESSCHOOLID_x"])>=12 else row["MASTERPROPERTIES_NCESSCHOOLID_x"], axis=1
-        )
+        # tw_merged_df["clensed_nces_y"] = tw_merged_df.apply(
+        #     lambda row: str(row["MASTERPROPERTIES_NCESSCHOOLID_y"]).zfill(12) if len(row["MASTERPROPERTIES_NCESSCHOOLID_x"])>=12 else row["MASTERPROPERTIES_NCESSCHOOLID_x"], axis=1
+        # )
         # print(tw_merged_df.filter(items=["FOCUS_ID", "focus_id_list", "MASTERPROPERTIES_SCHOOLNAME_x", "MASTERPROPERTIES_ID", "clensed_nces_x", "MASTERPROPERTIES_NCESSCHOOLID_x", "MASTERPROPERTIES_NCESSCHOOLID_y", "MASTERPROPERTIES_ADDRESS_CITY_x"], axis=1)
         #     .loc[(tw_merged_df['focus_id_list']==tw_merged_df['focus_id_list'])]
         #     .loc[(tw_merged_df['clensed_nces_x']!=tw_merged_df['clensed_nces_y'])]
@@ -87,16 +87,15 @@ def add_on_existing_db_ids(df, existing_db_df_path, intermediate_file_path):
         #tw_merged_df['MASTERPROPERTIES_ID'] = tw_merged_df['MASTERPROPERTIES_ID'].fillna(tw_merged_df['MASTERPROPERTIES_ID_1'])
 
         # using 3 as the xref value as ncessch is in xref 2
-        tw_merged_df['XREF_SOURCESYSTEM3'] = tw_merged_df['XREF_SOURCESYSTEM2_y']
-        tw_merged_df['XREF_KEYNAME3'] = tw_merged_df['XREF_KEYNAME2_y']
-        tw_merged_df['XREF_VALUE3'] = tw_merged_df['XREF_VALUE2_y']
+        tw_merged_df['XREF_SOURCESYSTEM3'] = "focus_classic"
+        tw_merged_df['XREF_KEYNAME3'] = "school_id"
+        tw_merged_df['XREF_VALUE3'] = tw_merged_df['FOCUS_ID']
 
 
         tw_merged_df = tw_merged_df.drop(columns=[col for col in tw_merged_df.columns if col.endswith('_y')])
         tw_merged_df.columns = [col.replace('_x', '') for col in tw_merged_df.columns]
 
         return tw_merged_df
-
 
         # tw_merged_update = tw_merged_df[tw_merged_df['MASTERPROPERTIES_ID'].notnull()]
         # tw_merged_insert = tw_merged_df[tw_merged_df['MASTERPROPERTIES_ID'].isnull()]
