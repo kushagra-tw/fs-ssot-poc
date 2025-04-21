@@ -47,7 +47,6 @@ def customer_prettifier(customer_file_path):
             lambda row: row["NCES_SCHID"] if is_nan(row["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"]) else row["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"], axis=1)
 
 
-    #TODO: what to do here??
     for blank_column in [
         "TECHNICALPROPERTIES_CREATESYSTEM",
         "TECHNICALPROPERTIES_CREATETIMESTAMP",
@@ -106,5 +105,5 @@ def customer_prettifier(customer_file_path):
     print(reordered.head())
     return reordered
 
-customer_prettifier("outputs/customers/customers_0417_2.csv") \
-    .to_csv('outputs/customers/pretty_customers_0417_2.csv')
+customer_prettifier("outputs/customers/customers_0421_2.csv") \
+    .to_csv('outputs/customers/pretty_customers_0421_2.csv')

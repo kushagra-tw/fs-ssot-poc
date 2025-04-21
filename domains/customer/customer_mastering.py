@@ -44,12 +44,20 @@ merged_df = full_customer_df.merge(
     left_on="NCES_LEAID",
     right_on="MASTERPROPERTIES_NCESSCHOOLDISTRICTID",
     how="left",
-    suffixes=["", "_y"]
-)
-
-merged_df.rename(columns={"MASTERPROPERTIES_ID_x": "MASTERPROPERTIES_ID"}, inplace=True)
-
-merged_df.drop(columns=[column for column in merged_df.columns if column[-2] == "_x"], inplace=True)
+).filter(items=[
+        "FOCUS_SCHOOL_DISTRICT_ID",
+        "NCES_LEAID",
+        "NCES_SCHID"
+        'FOCUS_SCHOOL_DISTRICT_NAME', 
+        'NCES_NAME',
+        "NCES_LEAID",
+        "NCES_NAME",
+        "NCES_STATE.1",
+        "NCES_CITY.1",
+        "NCES_STREET.1",
+        "NCES_ZIP.1",
+        "MASTERPROPERTIES_ID"
+    ], axis=1)
 
 creates = len(merged_df.loc[(merged_df["MASTERPROPERTIES_ID"] != merged_df["MASTERPROPERTIES_ID"])])
 updates = len(merged_df.loc[(merged_df["MASTERPROPERTIES_ID"] == merged_df["MASTERPROPERTIES_ID"])])
