@@ -1,9 +1,8 @@
 import sys
+sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
 
 from domains.customer.normalize_names import normalize_dataframe_columns
 from domains.customer.standardize_district_terms import standardize_terms_in_school_district
-
-sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
 
 import pandas as pd
 from rapidfuzz import fuzz
@@ -50,7 +49,7 @@ def quarantine(df, df_to_quarantine, quarantine_df, quarantine_reason):
 
     return subtracted_df, quarantine_df
 
-BASE_PATH = '/Users/kirtanshah/Documents/'
+BASE_PATH = '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/'
 
 focus_data = read_data(BASE_PATH +
     'DataFiles/FOCUS_SCHOOLS_DISTRICTS.csv')
@@ -63,6 +62,11 @@ focus_data = focus_data.add_prefix('FOCUS_')
 nces_data = read_data(
     BASE_PATH +'DataFiles/NCES_PUBL_PRIV_POSTSEC_SCHOOL_LOCATIONS.csv')
 nces_data = nces_data.add_prefix('NCES_')
+
+# TODO: remove when bad data is fixed
+nces_data["NCES_NCESSCH"] = nces_data.apply(
+            lambda row: (row["NCES_NCESSCH"].zfill(13)[0:7] + row["NCES_NCESSCH"][-5:]) if len(row["NCES_NCESSCH"])>=12 else row["NCES_NCESSCH"], axis=1
+        )
 
 
 # 1 ============= focus sf merge ===========
@@ -186,5 +190,4 @@ sd_sim_average = final_focus_df['focus_nces_district_name_similarity'][final_foc
 print("Distance average " + str(actual_distance_average))
 print("focus_nces_school_name_similarity average " + str(school_sim_average))
 print("focus_nces_district_name_similarity average " + str(sd_sim_average))
-final_focus_df.to_csv('outputs/schools/schools_0417_3.csv')
-quarantined_df.to_csv('outputs/schools/quarantined_schools_0417_3.csv')
+final_focus_df.to_csv('outputs/schools/schools_0421_1.csv')

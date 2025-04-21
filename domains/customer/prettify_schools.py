@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
 
 from domains.customer.Reader import read_data
+from domains.customer.generate_delta import add_on_existing_db_ids
 import pandas as pd
 
 from random import randint
@@ -97,6 +98,11 @@ def school_prettifier(schools_file_path):
 
         renamed[blank_column] = ""
 
+    renamed = add_on_existing_db_ids(
+        df=renamed,
+        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/school-export-2025-04-18-09-22.csv',
+        intermediate_file_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/iterm_schools_20250331.csv'
+    )
 
     reordered = renamed.filter(items=[
         "TECHNICALPROPERTIES_CREATESYSTEM",
@@ -110,6 +116,7 @@ def school_prettifier(schools_file_path):
         "MASTERPROPERTIES_ID_1",
         "MASTERPROPERTIES_ID_2",
         "FOCUS_ID",
+        "MASTERPROPERTIES_ID",
         "MASTERPROPERTIES_NCESSCHOOLID",
         "MASTERPROPERTIES_NCESSCHOOLDISTRICTID",
         "MASTERPROPERTIES_SCHOOLNAME",
@@ -135,11 +142,16 @@ def school_prettifier(schools_file_path):
         "XREF_SOURCESYSTEM2",
         "XREF_KEYNAME2",
         "XREF_VALUE2",
+        "XREF_SOURCESYSTEM3",
+        "XREF_KEYNAME3",
+        "XREF_VALUE3",
         "RELATION_ENTITY1",
         "RELATION_TYPE1",
         "RELATION_ID1"
     ])
 
-    print(reordered.head())
+    print(reordered.head(10))
     return reordered
     #reordered.to_csv('20250410_tw_schools.csv')
+
+school_prettifier('outputs/schools/schools_0421_1.csv')
