@@ -6,9 +6,9 @@ import pandas as pd
 
 from domains.customer.Reader import read_data
 
-BASE_PATH = '/Users/kirtanshah/PycharmProjects'
+BASE_PATH = '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/'
 schools_df = read_data(
-    BASE_PATH+'/fs-ssot-poc/domains/customer/outputs/schools/schools_0417_3.csv')
+    BASE_PATH+'outputs/schools/schools_0421_2.csv')
 
 customers_df = schools_df.filter(items=["FOCUS_SCHOOL_DISTRICT_ID", "NCES_LEAID"], axis=1) \
     .groupby("FOCUS_SCHOOL_DISTRICT_ID", as_index=False) \
@@ -37,4 +37,23 @@ full_customer_df = schools_df.filter(items=[
     .loc[(schools_df["NCES_LEAID"] == schools_df["NCES_LEAID"])] \
     .drop_duplicates() \
     
-full_customer_df.to_csv('outputs/customers/customers_0417_2.csv')
+existing_customers = read_data('/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/customer-export-2025-04-19-07-35.csv')
+
+merged_df = full_customer_df.merge(
+    right=existing_customers,
+    left_on="NCES_LEAID",
+    right_on="MASTERPROPERTIES_NCESSCHOOLDISTRICTID",
+    how="left",
+    suffixes=["", "_y"]
+)
+
+merged_df.rename(columns={"MASTERPROPERTIES_ID_x": "MASTERPROPERTIES_ID"}, inplace=True)
+
+merged_df.drop(columns=[column for column in merged_df.columns if column[-2] == "_x"], inplace=True)
+
+creates = len(merged_df.loc[(merged_df["MASTERPROPERTIES_ID"] != merged_df["MASTERPROPERTIES_ID"])])
+updates = len(merged_df.loc[(merged_df["MASTERPROPERTIES_ID"] == merged_df["MASTERPROPERTIES_ID"])])
+
+print(f"For customers, we have {creates} creates and {updates} updates")
+    
+merged_df.to_csv('outputs/customers/customers_0421_2.csv')
