@@ -3,12 +3,13 @@ sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-p
 
 
 import pandas as pd
+import os
 
 from domains.customer.Reader import read_data
 
 BASE_PATH = '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/'
 schools_df = read_data(
-    BASE_PATH+'outputs/schools/schools_0421_2.csv')
+    BASE_PATH+f'outputs/schools/schools_{os.environ.get("FILE_DATE_SUFFIX")}.csv')
 
 customers_df = schools_df.filter(items=["FOCUS_SCHOOL_DISTRICT_ID", "NCES_LEAID"], axis=1) \
     .groupby("FOCUS_SCHOOL_DISTRICT_ID", as_index=False) \
@@ -64,4 +65,4 @@ updates = len(merged_df.loc[(merged_df["MASTERPROPERTIES_ID"] == merged_df["MAST
 
 print(f"For customers, we have {creates} creates and {updates} updates")
     
-merged_df.to_csv('outputs/customers/customers_0421_2.csv')
+merged_df.to_csv(f'outputs/customers/customers_{os.environ.get("FILE_DATE_SUFFIX")}.csv')

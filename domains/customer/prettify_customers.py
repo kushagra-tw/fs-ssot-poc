@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, "/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/")
 
 from domains.customer.Reader import read_data
+import os
 
 def is_nan(field):
     return field != field
@@ -105,5 +106,5 @@ def customer_prettifier(customer_file_path):
     print(reordered.head())
     return reordered
 
-customer_prettifier("outputs/customers/customers_0421_2.csv") \
-    .to_csv('outputs/customers/pretty_customers_0421_2.csv')
+customer_prettifier(f"outputs/customers/customers_{os.environ.get('FILE_DATE_SUFFIX')}.csv") \
+    .to_csv(f'outputs/customers/pretty_customers_{os.environ.get("FILE_DATE_SUFFIX")}.csv')

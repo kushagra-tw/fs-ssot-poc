@@ -7,6 +7,8 @@ import pandas as pd
 
 from random import randint
 
+import os
+
 pd.set_option('display.max_columns', None)
 
 def get_random_four_digits():
@@ -150,9 +152,9 @@ def school_prettifier(schools_file_path):
         "RELATION_ID1"
     ])
 
-    print(reordered.head(10))
+    # print(reordered.head(10))
     return reordered
     # reordered.to_csv('20250410_tw_schools.csv')
 
-school_prettifier('outputs/schools/schools_0421_2.csv') \
-    .to_csv('outputs/schools/pretty_schools_0421_2.csv')
+school_prettifier(f'outputs/schools/schools_{os.environ.get("FILE_DATE_SUFFIX")}.csv') \
+    .to_csv(f'outputs/schools/pretty_schools_{os.environ.get("FILE_DATE_SUFFIX")}.csv')

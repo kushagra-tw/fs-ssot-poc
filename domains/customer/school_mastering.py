@@ -5,13 +5,14 @@ from domains.customer.normalize_names import normalize_dataframe_columns
 from domains.customer.standardize_district_terms import standardize_terms_in_school_district
 
 import pandas as pd
-from rapidfuzz import fuzz
 
 from domains.customer.Reader import read_data
 from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join_geodataframes_by_lat_lon_columns
 from domains.customer.name_similarity_scoring import add_similarity_score
 from domains.customer.fuzzy_name_merge import compare_distinct_sd_series_focus_sf
 from domains.customer.standardize_school_terms import standardize_school_names
+
+import os
 
 def test_non_null_columns(df: pd.DataFrame):
     """
@@ -110,7 +111,7 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
                                                    left_lon='FOCUS_ADDRESS_LONGITUDE',
                                                    right_lat='NCES_LAT',
                                                    right_lon='NCES_LON', how='left', distance=DISTANCE)
-lonely_schools = setsubtract(joined_gdf, focus_geodf)
+lonely_schools = joined_gdf.loc[(joined_gdf["actual_distance_m"] != joined_gdf["actual_distance_m"])]
 joined_gdf, quarantined_df = quarantine(joined_gdf, lonely_schools, quarantined_df, "No nearby candidate schools")
 
 # focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
@@ -202,5 +203,5 @@ sd_sim_average = final_focus_df['focus_nces_district_name_similarity'][final_foc
 print("Distance average " + str(actual_distance_average))
 print("focus_nces_school_name_similarity average " + str(school_sim_average))
 print("focus_nces_district_name_similarity average " + str(sd_sim_average))
-final_focus_df.to_csv('outputs/schools/schools_0421_2.csv')
-quarantined_df.to_csv('outputs/schools/quarantined_schools_0421_2.csv')
+final_focus_df.to_csv(f'outputs/schools/schools_{os.environ.get("FILE_DATE_SUFFIX")}.csv')
+quarantined_df.to_csv(f'outputs/schools/quarantined_schools_{os.environ.get("FILE_DATE_SUFFIX")}.csv')
