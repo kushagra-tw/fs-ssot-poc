@@ -6,8 +6,9 @@ import pandas as pd
 
 from domains.customer.Reader import read_data
 
+BASE_PATH = '/Users/kirtanshah/PycharmProjects'
 schools_df = read_data(
-    '/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/outputs/schools/schools_0417_2.csv')
+    BASE_PATH+'/fs-ssot-poc/domains/customer/outputs/schools/schools_0417_3.csv')
 
 customers_df = schools_df.filter(items=["FOCUS_SCHOOL_DISTRICT_ID", "NCES_LEAID"], axis=1) \
     .groupby("FOCUS_SCHOOL_DISTRICT_ID", as_index=False) \

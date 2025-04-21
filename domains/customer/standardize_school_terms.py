@@ -96,7 +96,7 @@ def standardize_school_names(df, cols_to_standardize):
         r'\bacademy\b',
         r'\bpreparatory\b',
         r'\binstitute\b',
-        r'\bcenter\b',
+        #r'\bcenter\b',
         r'\bcampus\b',
         r'\bprogram\b',
         r'\bday\b',              # e.g., keshet day school
@@ -140,7 +140,7 @@ def standardize_school_names(df, cols_to_standardize):
             print(f"Warning: Column '{col}' not found in DataFrame. Skipping.")
             continue
 
-        std_col = col + "_standardized"
+        std_col = col
 
         df_standardized[std_col] = df_standardized.apply(lambda row: row[col].lower(), axis=1)
 

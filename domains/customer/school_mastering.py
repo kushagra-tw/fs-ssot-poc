@@ -14,6 +14,20 @@ from domains.customer.name_similarity_scoring import add_similarity_score
 from domains.customer.fuzzy_name_merge import compare_distinct_sd_series_focus_sf
 from domains.customer.standardize_school_terms import standardize_school_names
 
+def test_non_null_columns(df: pd.DataFrame):
+    """
+    Tests if the specified columns in the DataFrame contain any null values.
+
+    Args:
+        df: The pandas DataFrame to test.
+
+    Raises:
+        AssertionError: If any of the specified columns contain null values.
+    """
+    non_null_columns = [ 'FOCUS_SCHOOL_NAME', 'NCES_SCH_NAME']
+    for col in non_null_columns:
+        assert not df[col].isnull().any(), f"Column '{col}' should not contain any null values."
+    print("All non-null tests passed!")
 
 def filter_sf_data(sf_data):
     sf_customer_type = ['Former Customer', 'Customer']
@@ -140,12 +154,14 @@ final_focus_df, quarantined_df = quarantine(final_focus_df, districts_disagree_d
 # focus_to_nces_multiple_matches_df = final_focus_df.groupby('nces_id').filter(lambda x: x['FOCUS_SCHOOL_ID'].nunique() > 1)
 # final_focus_df, quarantined_df = quarantine(final_focus_df, focus_to_nces_multiple_matches_df, quarantined_df, "Multiple Focus Schools matched with single NCES school")
 
+
 # Pick "best guess" school
 final_focus_df = \
     final_focus_df.sort_values(
         by=['FOCUS_SCHOOL_ID','focus_nces_school_name_similarity'],
         ascending=False
     ).groupby('FOCUS_SCHOOL_ID').first()
+
 
 # reorder to push all sf columns at the end
 all_columns = final_focus_df.columns.tolist()
@@ -159,5 +175,16 @@ final_focus_df = final_focus_df[new_column_order]
 
 print(f"Matched {final_focus_df.shape[0]} records!")
 
+try:
+    test_non_null_columns(final_focus_df)
+except AssertionError as e:
+    print(f"Test failed: {e}")
+
+actual_distance_average = final_focus_df['actual_distance_m'].mean()
+school_sim_average = final_focus_df['focus_nces_school_name_similarity'].mean()
+sd_sim_average = final_focus_df['focus_nces_district_name_similarity'][final_focus_df['NCES_NAME'].notnull()].mean()
+print("Distance average " + str(actual_distance_average))
+print("focus_nces_school_name_similarity average " + str(school_sim_average))
+print("focus_nces_district_name_similarity average " + str(sd_sim_average))
 final_focus_df.to_csv('outputs/schools/schools_0417_3.csv')
 quarantined_df.to_csv('outputs/schools/quarantined_schools_0417_3.csv')
