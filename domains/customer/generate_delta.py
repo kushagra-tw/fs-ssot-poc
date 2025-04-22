@@ -74,8 +74,12 @@ def add_on_existing_db_ids(df, existing_db_df_path, intermediate_file_path):
             .loc[(tw_merged_df['focus_id_list']==tw_merged_df['focus_id_list'])]
             .loc[(tw_merged_df['MASTERPROPERTIES_NCESSCHOOLID_x']!=tw_merged_df['MASTERPROPERTIES_NCESSCHOOLID_y'])]
         )
+        noops = len(tw_merged_df
+            .loc[(tw_merged_df['focus_id_list']==tw_merged_df['focus_id_list'])]
+            .loc[(tw_merged_df['MASTERPROPERTIES_NCESSCHOOLID_x']==tw_merged_df['MASTERPROPERTIES_NCESSCHOOLID_y'])]
+        )
 
-        print(f"Generating a file that will cause {creates} creates and {updates} updates.")
+        print(f"Generating a file that will cause {creates} creates, {updates} meaningful updates, and {noops} no-ops.")
 
         # raise Exception("Hurrah!")
         # print("total matched records")
