@@ -1,6 +1,6 @@
 set -euxo pipefail
 
-export FILE_DATE_SUFFIX=$(date +%Y%m%d)
+export FILE_DATE_SUFFIX=$(date +%Y%m%d)_2
 
 pip install -r requirements.txt
 
