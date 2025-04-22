@@ -103,7 +103,7 @@ def school_prettifier(schools_file_path):
 
     renamed = add_on_existing_db_ids(
         df=renamed,
-        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/customer-export-2025-04-22-15-54.csv',
+        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/school-export-2025-04-22-15-54.csv',
         intermediate_file_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/iterm_schools_20250331.csv'
     )
 
