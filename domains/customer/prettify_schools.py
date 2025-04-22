@@ -53,16 +53,16 @@ def school_prettifier(schools_file_path):
     # consolidated = tw_data.filter(items=column_mapping.keys())
     renamed = tw_data.rename(columns=column_mapping)
 
-
-
     renamed["MASTERPROPERTIES_NCESDATASET"] = "STATIC_NCES_DOWNLOAD"
     # renamed["MASTERPROPERTIES_ERSCODE"] = ""
     renamed["MASTERPROPERTIES_ADDRESSTYPE"] = "Location"
     renamed["MASTERPROPERTIES_COUNTRY"] = "USA"
-    renamed["MASTERPROPERTIES_ADDRESSLINE2"] = "USA"
 
     renamed["MASTERPROPERTIES_ADDRESS_POSTALCODE"] = renamed.apply(
             lambda row: row["NCES_ZIP"].zfill(5), axis=1)
+    
+    renamed["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"] = renamed.apply(
+            lambda row: row["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"] if is_nan(row["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"]) else str(int(row["MASTERPROPERTIES_NCESSCHOOLDISTRICTID"])), axis=1)
 
     renamed["MASTERPROPERTIES_ID_1"] = renamed.apply(
             lambda row: f"{get_random_four_digits()}-{get_random_four_digits()}-{get_random_four_digits()}", axis=1)
@@ -100,9 +100,10 @@ def school_prettifier(schools_file_path):
 
         renamed[blank_column] = ""
 
+
     renamed = add_on_existing_db_ids(
         df=renamed,
-        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/school-export-2025-04-18-09-22.csv',
+        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/customer-export-2025-04-22-15-54.csv',
         intermediate_file_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/iterm_schools_20250331.csv'
     )
 
@@ -131,7 +132,7 @@ def school_prettifier(schools_file_path):
         "MASTERPROPERTIES_ERSCODE",
         "MASTERPROPERTIES_ADDRESS_TYPE",
         "MASTERPROPERTIES_ADDRESS_POSTALCODE",
-        "MASTERPROPERTIES_ADDRESS_COUNTRY"
+        "MASTERPROPERTIES_ADDRESS_COUNTRY",
         "MASTERPROPERTIES_ADDRESS_STATEPROVINCE",
         "MASTERPROPERTIES_ADDRESS_CITY",
         "MASTERPROPERTIES_ADDRESS_ADDRESSLINE1",
@@ -150,7 +151,7 @@ def school_prettifier(schools_file_path):
         "RELATION_ENTITY1",
         "RELATION_TYPE1",
         "RELATION_ID1"
-    ])
+    ], axis=1)
 
     # print(reordered.head(10))
     return reordered
