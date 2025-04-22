@@ -37,16 +37,16 @@ full_customer_df = schools_df.filter(items=[
     ], axis=1).loc[(schools_df["FOCUS_SCHOOL_DISTRICT_ID"].isin(agreeing_customers["FOCUS_SCHOOL_DISTRICT_ID"]))] \
     .loc[(schools_df["NCES_LEAID"] == schools_df["NCES_LEAID"])] \
     .drop_duplicates() \
-    
-full_customer_df["_merge_id"] = full_customer_df.apply(
-    lambda row: row["NCES_SCHID"] if row["NCES_LEAID"] != row["NCES_LEAID"] else row["NCES_LEAID"]
+
+full_customer_df["NCES_LEAID"] = full_customer_df.apply(
+    lambda row: str(int(row["NCES_LEAID"])), axis=1
 )
     
 existing_customers = read_data('/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/customer-export-2025-04-22-15-54.csv')
 
 merged_df = full_customer_df.merge(
     right=existing_customers,
-    left_on="_merge_id",
+    left_on="NCES_LEAID",
     right_on="XREF_VALUE1",
     how="left",
 ).filter(items=[
