@@ -12,3 +12,16 @@ Pipfile.lock
 
 # Ignoring Pipfile
 Pipfile
+
+# --- Data ---
+# Ignore all files inside these specific data directories...
+data/raw/*
+data/interim/*
+data/processed/*
+
+# ...BUT do NOT ignore .gitkeep files anywhere under data/
+# This ensures the directory structure itself is tracked via the placeholders.
+!data/**/.gitkeep
+
+# Example: If you ever needed to commit a specific small file, un-ignore it:
+# !data/raw/small_lookup_table.csv
