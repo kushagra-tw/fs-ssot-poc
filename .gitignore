@@ -10,5 +10,5 @@ Pipfile.lock
 # IntelliJ IDEA specific files - User-specific settings
 .idea/
 
-# Ignoring Pipfile 
+# Ignoring Pipfile
 Pipfile
