@@ -6,3 +6,6 @@ Pipfile.lock
 
 # Ignore all IntelliJ IDEA module files
 *.iml
+
+# IntelliJ IDEA specific files - User-specific settings
+.idea/
