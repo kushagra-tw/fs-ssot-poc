@@ -1,0 +1,22 @@
+# config/config.yaml.example
+# --------------------------
+# EXAMPLE CONFIGURATION FILE
+# --------------------------
+# Instructions:
+# 1. Copy this file to 'config.yaml' in the same directory.
+# 2. Edit 'config.yaml' with your specific settings.
+# 3. DO NOT commit the actual 'config.yaml' file to Git if it contains secrets.
+#    Ensure 'config.yaml' is listed in your .gitignore file.
+
+paths:
+  # Input data locations - Adjust these paths for your setup
+  raw_data_dir: './data/raw/' # Example relative path for local dev
+
+  processed_data_dir: './data/processed/' # Example relative path
+
+  interim_data_dir: './data/interim/' # Example relative path
+
+  input_customers: 'customers.csv'
+  input_schools: 'schools.csv'
+  mastered_customers: 'customers_mastered.parquet'
+  pretty_customers: 'customers_pretty.csv'

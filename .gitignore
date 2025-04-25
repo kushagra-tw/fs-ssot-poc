@@ -15,13 +15,13 @@ Pipfile
 
 # --- Data ---
 # Ignore all files inside these specific data directories...
-data/raw/*
-data/interim/*
-data/processed/*
+customer/data/raw/*
+customer/data/interim/*
+customer/data/processed/*
 
 # ...BUT do NOT ignore .gitkeep files anywhere under data/
 # This ensures the directory structure itself is tracked via the placeholders.
-!data/**/.gitkeep
+!customer/data/**/.gitkeep
 
 # Example: If you ever needed to commit a specific small file, un-ignore it:
 # !data/raw/small_lookup_table.csv
