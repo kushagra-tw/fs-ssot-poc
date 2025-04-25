@@ -81,11 +81,7 @@ def add_on_existing_db_ids(df, existing_db_df_path, intermediate_file_path):
 
         print(f"Generating a file that will cause {creates} creates, {updates} meaningful updates, and {noops} no-ops.")
 
-        # raise Exception("Hurrah!")
-        # print("total matched records")
-        # print(tw_merged_df['MASTERPROPERTIES_ID'].notnull().sum())
-        # print("result df length")
-        # print(len(tw_merged_df))
+
 
         # commented below line as we dont want to add our generated id to final dataset
         #tw_merged_df['MASTERPROPERTIES_ID'] = tw_merged_df['MASTERPROPERTIES_ID'].fillna(tw_merged_df['MASTERPROPERTIES_ID_1'])
@@ -100,9 +96,3 @@ def add_on_existing_db_ids(df, existing_db_df_path, intermediate_file_path):
         tw_merged_df.columns = [col.replace('_x', '') for col in tw_merged_df.columns]
 
         return tw_merged_df
-
-        # tw_merged_update = tw_merged_df[tw_merged_df['MASTERPROPERTIES_ID'].notnull()]
-        # tw_merged_insert = tw_merged_df[tw_merged_df['MASTERPROPERTIES_ID'].isnull()]
-        # print(tw_merged_update.head())
-        # print("========== ============")
-        # print(tw_merged_insert.head())

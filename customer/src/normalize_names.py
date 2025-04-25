@@ -60,27 +60,3 @@ def normalize_dataframe_columns(df, cols_to_normalize):
         # --- End of Normalization Steps ---
 
     return df_normalized
-
-# Example Usage:
-# Make sure you have pandas installed: pip install pandas
-# import pandas as pd
-
-# Assume 'school_data' is your DataFrame loaded from a file (e.g., 'unique_combinations.txt')
-# school_data = pd.read_csv('unique_combinations.txt')
-
-# Define the list of columns you want to normalize
-# columns_to_process = [
-#     'FOCUS_SCHOOL_DISTRICT_NAME',
-#     'NCES_NAME',
-#     'FOCUS_SCHOOL_NAME', # Add based on your actual columns
-#     'NCES_SCH_NAME'      # Add based on your actual columns
-# ]
-
-# Apply the function
-# normalized_df = normalize_dataframe_columns(school_data, columns_to_process)
-
-# Display some results (adjust columns displayed as needed)
-# print(normalized_df[['FOCUS_SCHOOL_DISTRICT_NAME', 'FOCUS_SCHOOL_DISTRICT_NAME_normalized',
-#                      'NCES_NAME', 'NCES_NAME_normalized']].head())
-# print(normalized_df[['FOCUS_SCHOOL_NAME', 'FOCUS_SCHOOL_NAME_normalized',
-#                      'NCES_SCH_NAME', 'NCES_SCH_NAME_normalized']].head())

@@ -67,8 +67,7 @@ def standardize_school_names(df, cols_to_standardize):
         # Add more mappings as discovered...
     }
 
-    # Expanded list of terms to remove (Review carefully - may remove useful info)
-    # Removing longer phrases first can be slightly more robust
+
     terms_to_remove = [
         # Full types (often redundant after mapping)
         #r'\bjúnior senior high school\b', # Use unicode or handle accents if needed
@@ -148,9 +147,6 @@ def standardize_school_names(df, cols_to_standardize):
         # Ensure working with strings, handle potential NaN/None values
         df_standardized[std_col] = df_standardized[std_col].fillna('').astype(str)
 
-        # Pre-processing within function (optional, depends on prior steps)
-        # Example: Replace '/' if not handled before mapping 'jr/sr'
-        # df_standardized[col] = df_standardized[col].str.replace('/', ' ', regex=False)
 
         # 1. Expand abbreviations (Multiple passes for potential chaining)
         for _ in range(1):
@@ -170,38 +166,5 @@ def standardize_school_names(df, cols_to_standardize):
         df_standardized[std_col] = df_standardized[std_col].str.strip()
         df_standardized[std_col] = df_standardized[std_col].str.replace(r'\s+', ' ', regex=True)
 
-        # 4. Optional: Handle possessive 's' (Use with extreme caution!)
-        # This is risky as it might affect names like "st james's school" or plurals like "arts"
-        # Consider only applying if fuzzy matching doesn't handle it well.
-        # Example (apply carefully):
-        # df_standardized[col] = df_standardized[col].apply(lambda x: re.sub(r"(\w+)s$", r"\1", x) if x.endswith('s') and not x.endswith('ss') else x)
-
 
     return df_standardized
-
-# # --- Example Usage (using the same sample data) ---
-# data = {
-#     'FOCUS_SCHOOL_NAME_standardized': [
-#         'lake spokane elem school', 'metcalf school', 'lewis es', 'longwood middle school',
-#         'd89 westfield elementary', 'van sickle campus', 'janis dismus', 'isbell school',
-#         'winnisquam high school', 'chestnut hill elementary', 'st paul luthern school',
-#         'keshet day school', 'glenbard north hs', 'ava maria academy mt lebanon campus',
-#         'sherwood es', 'iroquois jshs', 'paxton buckley loda jr sr high', 'bishop hendricken hs', # Assuming '/' replaced by space
-#         'hedrick middle school', 'mt tamalpais school', 'bridge valley elementary', 'seacoast charter school',
-#         'central bucks east', 'conwell middle school', 'pine point', 'marshall street elementary'
-#     ],
-#     'NCES_SCH_NAME_standardized': [
-#         'lake spokane elementary', 'thomas metcalf school', '', 'longwood middle school',
-#         'westfield elem school', 'van sickle academy', 'janis e dismus middle school', 'isbell middle',
-#         'winnisquam regional high school', 'chestnut hill el sch', '',
-#         'keshet elmentary', 'glenbard north high school', 'ave maria academy mt lebanon campus',
-#         'sherwood elementary', 'iroquois junior senior high school', 'paxton buckley loda high school', 'bishop hendricken high school',
-#         'hedrick middle school', 'mount tamalpais school', 'bridge valley el sch', 'seacoast charter school',
-#         'central bucks hs east', 'conwell russell ms', 'pine point school', 'marshall street el sch'
-#     ]
-# }
-# df_input = pd.DataFrame(data)
-# columns_to_process = ['FOCUS_SCHOOL_NAME_standardized', 'NCES_SCH_NAME_standardized']
-# df_output_v2 = standardize_school_names_v2(df_input, columns_to_process)
-# print("\nStandardized DataFrame (v2):")
-# print(df_output_v2)

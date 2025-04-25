@@ -114,23 +114,3 @@ def standardize_terms_in_school_district(df, cols_to_standardize):
 
     return df_standardized
 
-# Example usage (assuming previous normalization script was also run):
-# data = {'FOCUS_SCHOOL_DISTRICT_NAME': ["Racine RUSD", "Buffalo PSD", "Hicksville HTS", "MAST Community CS", "Ridgefield PS", "RICHMOND CITY PBLC SCHS", "Winnacunnet Coop School District", "SAU 50 Concord", "Ketchikan Gateway Boro SD"],
-#         'NCES_NAME': ["Racine Unified School District", "BUFFALO PUBLIC SCHOOL DISTRICT", "Hicksville Heights", "MAST Charter School", "Ridgefield Public Schools", "RICHMOND CITY PUBLIC SCHOOLS", "Winnacunnet Cooperative", "Concord SCHOOL ADMINISTRATIVE UNIT 50", "Ketchikan Gateway BOROUGH School District"]}
-# df_normalized = pd.DataFrame(data) # Assume this df is already normalized (uppercase, basic punctuation removed)
-
-# columns_to_standardize = ['FOCUS_SCHOOL_DISTRICT_NAME', 'NCES_NAME']
-# standardized_df = standardize_terms_in_dataframe(df_normalized, columns_to_standardize)
-# print(standardized_df)
-
-# Expected Output for Example Data:
-# FOCUS_SCHOOL_DISTRICT_NAME NCES_NAME
-# RACINE                     RACINE
-# BUFFALO                    BUFFALO
-# HICKSVILLE HEIGHTS         HICKSVILLE HEIGHTS # Assumes HTS->HEIGHTS is correct
-# MAST                       MAST
-# RIDGEFIELD                 RIDGEFIELD
-# RICHMOND CITY              RICHMOND CITY
-# WINNACUNNET                WINNACUNNET
-# CONCORD 50                 CONCORD 50
-# KETCHIKAN GATEWAY          KETCHIKAN GATEWAY

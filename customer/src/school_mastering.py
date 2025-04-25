@@ -114,8 +114,7 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, nces_geodf,
 lonely_schools = joined_gdf.loc[(joined_gdf["actual_distance_m"] != joined_gdf["actual_distance_m"])]
 joined_gdf, quarantined_df = quarantine(joined_gdf, lonely_schools, quarantined_df, "No nearby candidate schools")
 
-# focus_with_nces_id = focus_sf_merge[focus_sf_merge['SF_NCES_ID__C'].notna()]
-# complete_focus_df  = pd.concat([focus_with_nces_id,joined_gdf_no_nces_id],ignore_index=True)
+
 
 joined_gdf = joined_gdf.loc[(joined_gdf['actual_distance_m'] <= DISTANCE)]
 columns_to_process = [

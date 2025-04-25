@@ -1,0 +1,10 @@
+paths:
+  # Input data locations - Adjust these paths for your setup
+  raw_data_dir: './data/raw/' # Example relative path for local dev
+
+  processed_data_dir: './data/processed/' # Example relative path
+
+  interim_data_dir: './data/interim/' # Example relative path
+
+  focus_file_name: 'FOCUS_SCHOOLS_DISTRICTS.csv'
+  
