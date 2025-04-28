@@ -57,7 +57,7 @@ def school_prettifier(schools_file_path):
 
     renamed = add_on_existing_db_ids(
         df=renamed,
-        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/school-export-2025-04-22-15-54.csv',
+        existing_db_df_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/school-export-2025-04-18-09-22.csv',
         intermediate_file_path='/Users/michaelbarnett/Desktop/clients/FirstStudent/fs-ssot-poc/domains/customer/DataFiles/iterm_schools_20250331.csv'
     )
 
@@ -78,10 +78,10 @@ def school_prettifier(schools_file_path):
     renamed["MASTERPROPERTIES_ID_2"] = renamed.apply(
         lambda row: f"US{school_type_to_code[row['MASTERPROPERTIES_SCHOOLTYPE']]}-{row['MASTERPROPERTIES_ID_1'][5:9]}-{row['MASTERPROPERTIES_ID_1'][10:14]}", axis=1)
 
-    renamed["XREF_SOURCESYSTEM1"] = "nces"
-    renamed["XREF_KEYNAME1"] = "schid"
+    renamed["XREF_SOURCESYSTEM1"] = "focus_classic"
+    renamed["XREF_KEYNAME1"] = "school_id"
     renamed["XREF_VALUE1"] = renamed.apply(
-            lambda row: row["NCES_SCHID"], axis=1)
+            lambda row: row["FOCUS_ID"], axis=1)
 
     renamed["XREF_SOURCESYSTEM2"] = "nces"
     renamed["XREF_KEYNAME2"] = "ncessch"
@@ -107,8 +107,6 @@ def school_prettifier(schools_file_path):
         ]:
 
         renamed[blank_column] = ""
-
-
 
 
     reordered = renamed.filter(items=[
