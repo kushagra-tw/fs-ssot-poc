@@ -75,6 +75,15 @@ final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NA
 
 final_focus_df['authority_hash_12'] = final_focus_df.apply(create_authority_hash_12char, axis=1)
 
+
 filtered_df = final_focus_df[final_focus_df['focus_odef_school_name_similarity'] >= 50]
+
+
+authority_counts = filtered_df[[ "FOCUS_SCHOOL_DISTRICT_ID","authority_hash_12",
+                                "ODEF_authority_id", "ODEF_authority_name",
+                                "ODEF_province_code"]].drop_duplicates().groupby('authority_hash_12')['FOCUS_SCHOOL_DISTRICT_ID'].count()
+single_match_authorities = authority_counts[authority_counts == 1]
+filtered_df = filtered_df[filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
+
 print(len(filtered_df))
 filtered_df.sort_values(by='focus_odef_school_name_similarity').to_csv("/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/raw/canada_schools.csv", index=False, encoding='utf-8-sig')
