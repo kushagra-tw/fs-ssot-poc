@@ -5,6 +5,22 @@ from domains.customer.geo_matching import create_geodataframe_from_lat_lon, join
 from domains.customer.name_similarity_scoring import add_similarity_score
 from domains.customer.normalize_names import normalize_dataframe_columns
 
+import hashlib
+import numpy as np
+
+def create_authority_hash_12char(row):
+  # Check for NaN values (since '..' was converted to NaN on load)
+  auth_id = str(row['ODEF_authority_id']) if pd.notna(row['ODEF_authority_id']) else ''
+  auth_name = str(row['ODEF_authority_name']) if pd.notna(row['ODEF_authority_name']) else ''
+  prov_code = str(row['ODEF_province_code']) if pd.notna(row['ODEF_province_code']) else '' # Added province code
+
+  # Concatenate the strings using a separator
+  combined_string = f"{auth_id}|{auth_name}|{prov_code}"
+
+  # Create SHA-256 hash and take the first 12 characters
+  full_hash = hashlib.sha256(combined_string.encode('utf-8')).hexdigest()
+  return full_hash[:12]
+
 BASE_PATH = '/Users/kirtanshah/Documents/'
 
 focus_data = read_data(BASE_PATH +
@@ -56,6 +72,8 @@ sim_sn_focus_df = add_similarity_score(normalized_df, 'FOCUS_SCHOOL_NAME_without
                                        'focus_odef_school_name_similarity')
 final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NAME_without_accent_standardized', 'ODEF_authority_name_without_accent_standardized',
                                       'focus_odef_district_name_similarity')
+
+final_focus_df['authority_hash_12'] = final_focus_df.apply(create_authority_hash_12char, axis=1)
 
 filtered_df = final_focus_df[final_focus_df['focus_odef_school_name_similarity'] >= 50]
 print(len(filtered_df))
