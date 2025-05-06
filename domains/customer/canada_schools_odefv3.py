@@ -28,7 +28,7 @@ focus_data = read_data(BASE_PATH +
 focus_data = focus_data.add_prefix('FOCUS_')
 canada_state_abbvs = ['AB', 'BC', 'MB', 'NB', 'NL', 'NT', 'NS', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT', 'QB','PQ']
 canada_records = focus_data.loc[(focus_data['FOCUS_STATE'].isin(canada_state_abbvs))]
-print("canada records: ")
+print("Count of canada records in Focus classic: ")
 print(len(canada_records))
 odef_file_data = pd.read_csv(BASE_PATH + "DataFiles/odef_v3.csv", na_values='..', encoding='utf-8')
 odef_file_data = odef_file_data.add_prefix('ODEF_')
@@ -49,9 +49,9 @@ joined_gdf = join_geodataframes_by_lat_lon_columns(focus_geodf, odef_geodf,
                                                    right_lat='ODEF_Latitude',
                                                    right_lon='ODEF_Longitude', how='inner', distance=DISTANCE)
 
-print("join res")
+print("Count of records matched based on proximity check")
 print(len(joined_gdf))
-
+print("Count of records filtered out by proximity check: "+ str(len(canada_records) - len(joined_gdf) ))
 columns_to_unidecode = ['FOCUS_SCHOOL_DISTRICT_NAME', 'FOCUS_SCHOOL_NAME', 'ODEF_facility_name', 'ODEF_authority_name']
 
 for col in columns_to_unidecode:
@@ -75,6 +75,8 @@ final_focus_df = add_similarity_score(sim_sn_focus_df, 'FOCUS_SCHOOL_DISTRICT_NA
 
 final_focus_df['authority_hash_12'] = final_focus_df.apply(create_authority_hash_12char, axis=1)
 
+records_filtered_out_by_similarity = final_focus_df[final_focus_df['focus_odef_school_name_similarity'] < 50]
+print(f"Count of records to be filtered out by similarity (< 50): {len(records_filtered_out_by_similarity)}")
 
 filtered_df = final_focus_df[final_focus_df['focus_odef_school_name_similarity'] >= 50]
 
@@ -83,7 +85,11 @@ authority_counts = filtered_df[[ "FOCUS_SCHOOL_DISTRICT_ID","authority_hash_12",
                                 "ODEF_authority_id", "ODEF_authority_name",
                                 "ODEF_province_code"]].drop_duplicates().groupby('authority_hash_12')['FOCUS_SCHOOL_DISTRICT_ID'].count()
 single_match_authorities = authority_counts[authority_counts == 1]
-filtered_df = filtered_df[filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
 
+records_filtered_out_by_authority_match = filtered_df[~filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
+print(f"Count of records to be filtered out by authority match (not in single_match_authorities): {len(records_filtered_out_by_authority_match)}")
+
+filtered_df = filtered_df[filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
+print("count of records in result Canada schools dataset ")
 print(len(filtered_df))
 filtered_df.sort_values(by='focus_odef_school_name_similarity').to_csv("/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/raw/canada_schools.csv", index=False, encoding='utf-8-sig')
