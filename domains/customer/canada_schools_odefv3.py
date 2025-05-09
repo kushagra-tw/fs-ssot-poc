@@ -87,9 +87,10 @@ authority_counts = filtered_df[[ "FOCUS_SCHOOL_DISTRICT_ID","authority_hash_12",
 single_match_authorities = authority_counts[authority_counts == 1]
 
 records_filtered_out_by_authority_match = filtered_df[~filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
+records_filtered_out_by_authority_match.to_csv("/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/quarantine_canada_multiple_SD_single_authority.csv", index=False, encoding='utf-8-sig')
 print(f"Count of records to be filtered out by authority match (not in single_match_authorities): {len(records_filtered_out_by_authority_match)}")
 
 filtered_df = filtered_df[filtered_df['authority_hash_12'].isin(single_match_authorities.index)]
 print("count of records in result Canada schools dataset ")
 print(len(filtered_df))
-filtered_df.sort_values(by='focus_odef_school_name_similarity').to_csv("/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/raw/canada_schools.csv", index=False, encoding='utf-8-sig')
+filtered_df.sort_values(by='focus_odef_school_name_similarity').to_csv("/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_schools.csv", index=False, encoding='utf-8-sig')
