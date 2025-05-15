@@ -2,221 +2,255 @@ import sys
 import pandas as pd
 from random import randint
 import os
-import re # For text processing
+import re  # For text processing
 
 # Placeholder for custom module imports, adjust if needed for your environment
+# Example: If you have a central 'Reader' or 'generate_delta' module you want to use
 # sys.path.insert(0, "/path/to/your/custom/modules/")
-# from domains.customer.Reader import read_data # Assuming a generic CSV reader for now
+# from domains.customer.Reader import read_data
 # from domains.customer.generate_delta import add_on_existing_db_ids # This will be skipped
 
-pd.set_option('display.max_columns', None)
+pd.set_option('display.max_columns', None)  # Show all columns when printing DataFrames
+pd.set_option('display.max_rows', None)  # Show all rows
+pd.set_option('future.no_silent_downcasting', True) # Opt-in to future behavior
+
 
 def get_random_four_digits():
     return str(randint(0, 9999)).zfill(4)
 
+
 def is_nan(value):
     """
-    Checks if a value is NaN (works for float NaN) or None.
-    Also considers empty strings or strings with only whitespace as 'nan-like' for some checks.
+    Checks if a value is NaN (works for float NaN), None, or an empty/whitespace-only string.
     """
     if value is None:
         return True
-    if isinstance(value, float) and value != value: # Standard NaN check for float
+    if isinstance(value, float) and value != value:  # Standard NaN check for float
         return True
-    if isinstance(value, str) and not value.strip(): # Empty string
+    if isinstance(value, str) and not value.strip():  # Empty string or only whitespace
         return True
     return False
 
+
 def coalesce_fields(row, primary_col, secondary_col):
-    primary_val = row.get(primary_col)
-    if not is_nan(primary_val):
-        return primary_val
-    secondary_val = row.get(secondary_col)
-    if not is_nan(secondary_val):
-        return secondary_val
-    return "" # Or pd.NA or None, depending on desired empty value
+    """
+    Returns the value from the primary column if present and not 'nan-like'.
+    Otherwise, returns the value from the secondary column if present and not 'nan-like'.
+    Returns an empty string if neither is suitable.
+    Ensures string values are stripped of leading/trailing whitespace.
+    """
+    primary_val_raw = row.get(primary_col)
+    if not is_nan(primary_val_raw):
+        return str(primary_val_raw).strip() if not (
+                    isinstance(primary_val_raw, float) and primary_val_raw != primary_val_raw) else primary_val_raw
+
+    secondary_val_raw = row.get(secondary_col)
+    if not is_nan(secondary_val_raw):
+        return str(secondary_val_raw).strip() if not (isinstance(secondary_val_raw,
+                                                                 float) and secondary_val_raw != secondary_val_raw) else secondary_val_raw
+
+    return ""  # Default if both are nan-like or missing
+
 
 def format_canadian_postal_code(postal_code_val):
+    """
+    Formats a Canadian postal code string to 'A1A 1A1' format.
+    Returns an empty string if input is nan-like, or original (as string) if not a typical format.
+    """
     if is_nan(postal_code_val):
-        return "" # Or pd.NA / None
+        return ""
     pc = str(postal_code_val).upper().replace("-", "").replace(" ", "")
-    if len(pc) == 6 and pc.isalnum(): # Basic check, might need more robust validation
+    if len(pc) == 6 and pc.isalnum():  # Basic check
         return f"{pc[:3]} {pc[3:]}"
-    return str(postal_code_val) # Return original (as string) if not a typical format or already formatted
-
-# TODO: Review MASTERPROPERTIES_ADDRESS_ADDRESSLINE2 logic
-# Ambiguity: Specifically for Address Line 2, should ODEF_postOfficeBoxNumber be the primary source,
-# or FOCUS_ADDRESS_2?
-# Decision: Use ODEF_ on priority followed by FOCUS_. Marking for review.
-def get_address_line2(row):
-    odef_val = row.get("ODEF_postOfficeBoxNumber")
-    if not is_nan(odef_val):
-        return str(odef_val) # Ensure it's string
-    focus_val = row.get("FOCUS_ADDRESS_2")
-    if not is_nan(focus_val):
-        return str(focus_val)
-    return ""
+    return str(postal_code_val)  # Return original string if not a typical 6-char alphanumeric
 
 
-def school_prettifier_canada_odef_v2(schools_file_path):
+def derive_school_type_from_isced_canada(row):
+    """
+    Derives a comma-separated string for MASTERPROPERTIES_SCHOOLTYPE based on ISCED flag columns.
+    The ODEF_ISCED columns are expected to contain values like '0', '1', '0.0', '1.0', or be NaN/empty.
+    """
+    school_types = []
+    isced_mapping = {
+        "ODEF_ISCED010": "Early Childhood Educational Development",  # ISCED 010
+        "ODEF_ISCED020": "Pre-primary Education",  # ISCED 020
+        "ODEF_ISCED1": "Primary Education",  # ISCED 1
+        "ODEF_ISCED2": "Lower Secondary Education",  # ISCED 2
+        "ODEF_ISCED3": "Upper Secondary Education",  # ISCED 3
+        "ODEF_ISCED4Plus": "Post-secondary Non-tertiary and Higher Education"  # ISCED 4+
+    }
+    isced_columns_in_order = [
+        "ODEF_ISCED010", "ODEF_ISCED020", "ODEF_ISCED1",
+        "ODEF_ISCED2", "ODEF_ISCED3", "ODEF_ISCED4Plus"
+    ]
+
+    for col_name in isced_columns_in_order:
+        value_str = row.get(col_name)
+        is_present = False
+        if not is_nan(value_str):
+            try:
+                if abs(float(str(value_str)) - 1.0) < 0.001:
+                    is_present = True
+            except ValueError:
+                pass
+
+        if is_present:
+            school_types.append(isced_mapping[col_name])
+
+    if not school_types:
+        return "Unknown or Not Specified"
+    return ", ".join(school_types)
+
+
+def school_prettifier_canada_odef_v4(schools_file_path: str) -> pd.DataFrame:  # Renamed function
+    """
+    Processes the Canadian schools data file to generate a prettified DataFrame.
+    :param schools_file_path: Path to the input CSV file (e.g., canada_schools.csv).
+    :return: A pandas DataFrame with the prettified school data.
+    """
     try:
-        # Using pandas directly. Replace with your read_data if it offers specific advantages.
-        canada_data = pd.read_csv(schools_file_path, low_memory=False, dtype=str) # Read all as string initially
-        # Convert specific columns to numeric later if needed, after handling NaNs
+        canada_data = pd.read_csv(schools_file_path, low_memory=False, dtype=str)
+        canada_data.columns = canada_data.columns.str.strip()
+        for col in canada_data.select_dtypes(include=['object']).columns:
+            canada_data[col] = canada_data[col].str.strip()
+            canada_data[col] = canada_data[col].replace(['..', '.', 'N/A', 'NA', 'None', 'NULL', 'Null'], '',
+                                                        regex=False)
+
+    except FileNotFoundError:
+        print(f"ERROR: Input file not found at '{schools_file_path}'. Please check the path.")
+        return pd.DataFrame()
     except Exception as e:
-        print(f"Error reading Canadian schools file: {e}")
+        print(f"Error reading or performing initial processing on Canadian schools file '{schools_file_path}': {e}")
         return pd.DataFrame()
 
-    # --- Column Mapping (Direct Renames or Primary Source Identification) ---
-    # Target names are kept as "GOVT" for schema consistency with previous script versions,
-    # despite data being Canadian.
     column_mapping = {
         "FOCUS_SCHOOL_ID": "FOCUS_ID",
         "ODEF_unique_id": "MASTERPROPERTIES_GOVTSCHOOLID",
-        # authority_hash_12 will be used for MASTERPROPERTIES_GOVTSCHOOLDISTRICTID directly later
-        # ODEF_facility_name and FOCUS_SCHOOL_NAME will be coalesced for MASTERPROPERTIES_SCHOOLNAME
-        # ODEF_authority_name and FOCUS_SCHOOL_DISTRICT_NAME will be coalesced for MASTERPROPERTIES_SCHOOLDISTRICTNAME
         "FOCUS_SCHOOL_CODE": "MASTERPROPERTIES_ERSCODE",
-        # Address components will be handled by coalesce logic
     }
-    renamed_df = canada_data.rename(columns=column_mapping)
+    actual_renames = {k: v for k, v in column_mapping.items() if k in canada_data.columns}
+    renamed_df = canada_data.rename(columns=actual_renames)
 
-    # --- Populate fields based on decisions ---
-
-    # MASTERPROPERTIES_GOVTSCHOOLDISTRICTID from authority_hash_12
-    if "authority_hash_12" in renamed_df.columns:
-        renamed_df["MASTERPROPERTIES_GOVTSCHOOLDISTRICTID"] = renamed_df["authority_hash_12"]
+    source_col_district_id = "authority_hash_12"
+    if source_col_district_id in renamed_df.columns:
+        renamed_df["MASTERPROPERTIES_GOVTSCHOOLDISTRICTID"] = renamed_df[source_col_district_id]
     else:
-        print("WARNING: Column 'authority_hash_12' not found for MASTERPROPERTIES_GOVTSCHOOLDISTRICTID. Field will be blank.")
+        print(
+            f"WARNING: Source column '{source_col_district_id}' not found. MASTERPROPERTIES_GOVTSCHOOLDISTRICTID will be blank.")
         renamed_df["MASTERPROPERTIES_GOVTSCHOOLDISTRICTID"] = ""
 
-
-    # Coalesce School Name
     renamed_df["MASTERPROPERTIES_SCHOOLNAME"] = renamed_df.apply(
         lambda row: coalesce_fields(row, "ODEF_facility_name", "FOCUS_SCHOOL_NAME"), axis=1
     )
-
-    # Coalesce School District Name
     renamed_df["MASTERPROPERTIES_SCHOOLDISTRICTNAME"] = renamed_df.apply(
         lambda row: coalesce_fields(row, "ODEF_authority_name", "FOCUS_SCHOOL_DISTRICT_NAME"), axis=1
     )
 
-    # Address Components (ODEF priority, then FOCUS)
     renamed_df["MASTERPROPERTIES_ADDRESS_STATEPROVINCE"] = renamed_df.apply(
         lambda row: coalesce_fields(row, "ODEF_province_code", "FOCUS_STATE"), axis=1
     )
     renamed_df["MASTERPROPERTIES_ADDRESS_CITY"] = renamed_df.apply(
-        lambda row: coalesce_fields(row, "ODEF_addressLocality", "FOCUS_CITY_NAME"), axis=1 # Or FOCUS_CITY if that's the correct one
+        lambda row: coalesce_fields(row, "ODEF_addressLocality", "FOCUS_CITY_NAME"), axis=1
     )
+    focus_addr1_col_name = "FOCUS_ADRRESS_1" if "FOCUS_ADRRESS_1" in renamed_df.columns else "FOCUS_ADDRESS_1"
     renamed_df["MASTERPROPERTIES_ADDRESS_ADDRESSLINE1"] = renamed_df.apply(
-        lambda row: coalesce_fields(row, "ODEF_streetAddress", "FOCUS_ADRRESS_1"), axis=1 # Note: FOCUS_ADRRESS_1 typo from CSV
+        lambda row: coalesce_fields(row, "ODEF_streetAddress", focus_addr1_col_name), axis=1
     )
-    # TODO: Review MASTERPROPERTIES_ADDRESS_ADDRESSLINE2 logic below based on actual data quality
-    renamed_df["MASTERPROPERTIES_ADDRESS_ADDRESSLINE2"] = renamed_df.apply(get_address_line2, axis=1)
 
     renamed_df["MASTERPROPERTIES_ADDRESS_POSTALCODE"] = renamed_df.apply(
         lambda row: format_canadian_postal_code(coalesce_fields(row, "ODEF_postalCode", "FOCUS_POSTAL_CODE")), axis=1
     )
-    # Lat/Lon - Assuming ODEF is preferred. If FOCUS can be a fallback, add coalesce.
-    # For simplicity, directly taking ODEF if available, else check FOCUS.
-    # Need to handle potential non-numeric values before converting to float.
+
     def get_coord(row, odef_col, focus_col):
-        val = coalesce_fields(row, odef_col, focus_col)
-        try:
-            return pd.to_numeric(val)
-        except ValueError:
-            return pd.NA # Or None
+        val_str = coalesce_fields(row, odef_col, focus_col)
+        if not is_nan(val_str):
+            try:
+                num_val = pd.to_numeric(val_str, errors='raise')
+                return num_val
+            except ValueError:
+                return pd.NA
+        return pd.NA
 
-    renamed_df["MASTERPROPERTIES_ADDRESS_LATITUDE"] = renamed_df.apply(lambda row: get_coord(row, "ODEF_Latitude", "FOCUS_ADDRESS_LATITUDE"), axis=1)
-    renamed_df["MASTERPROPERTIES_ADDRESS_LONGITUDE"] = renamed_df.apply(lambda row: get_coord(row, "ODEF_Longitude", "FOCUS_ADDRESS_LONGITUDE"), axis=1)
+    renamed_df["MASTERPROPERTIES_ADDRESS_LATITUDE"] = renamed_df.apply(
+        lambda row: get_coord(row, "ODEF_Latitude", "FOCUS_ADDRESS_LATITUDE"), axis=1)
+    renamed_df["MASTERPROPERTIES_ADDRESS_LONGITUDE"] = renamed_df.apply(
+        lambda row: get_coord(row, "ODEF_Longitude", "FOCUS_ADDRESS_LONGITUDE"), axis=1)
 
-
-    # Static assignments
     renamed_df["MASTERPROPERTIES_GOVTDATASET"] = "STATIC_ODEF_CANADA"
     renamed_df["MASTERPROPERTIES_ADDRESS_TYPE"] = "Location"
     renamed_df["MASTERPROPERTIES_ADDRESS_COUNTRY"] = "CAN"
 
-    # --- Skipped/TODO Fields (as per user decisions) ---
-    # MASTERPROPERTIES_SCHOOLTYPE
-    # TODO: Define School Type for Canadian schools.
-    # Ambiguity Questions:
-    # 1. How to define "School Type"? From ODEF_facility_name keywords (e.g., "Elementary", "Secondary")?
-    #    If so, provide keywords and corresponding types.
-    # 2. Use ISCED classification (ODEF_ISCED1, ODEF_ISCED2) or flags (ODEF_french_immersion)?
-    #    If so, what are the categories and derivation logic?
-    # 3. How to map these Canadian types to two-letter codes for MASTERPROPERTIES_ID_2 (prefix "CA")?
-    #    Provide school_type_to_code_canada mapping if this field is to be generated.
-    renamed_df["MASTERPROPERTIES_SCHOOLTYPE"] = "TODO: Define Canadian School Type" # Placeholder
+    renamed_df["MASTERPROPERTIES_SCHOOLTYPE"] = renamed_df.apply(derive_school_type_from_isced_canada, axis=1)
+
+    # --- Fields explicitly set to NULL/Placeholder as per user decision ---
+
+    # MASTERPROPERTIES_ID_2
+    # TODO: If MASTERPROPERTIES_ID_2 is needed:
+    # 1. Define how to derive a single representative two-letter code from the
+    #    (potentially multiple) ISCED types listed in MASTERPROPERTIES_SCHOOLTYPE.
+    #    For example, prioritize one ISCED level, or use a combination rule.
+    # 2. Provide the corresponding school_type_to_code_canada mapping for these derived single codes.
+    renamed_df["MASTERPROPERTIES_ID_2"] = ""  # Set to blank as requested (null equivalent)
 
     # MASTERPROPERTIES_SCHOOLLEVEL
     # TODO: Define School Level for Canadian schools from ODEF_min_grade and ODEF_max_grade.
-    # Ambiguity Questions:
+    # Questions for user:
     # 1. Provide specific rules/categories for translating (ODEF_min_grade, ODEF_max_grade) to School Level.
     #    - Define "Elementary" (e.g., K-5, K-6, PreK-6)?
     #    - Define "Middle" (e.g., 6-8, 7-9)?
     #    - Define "Secondary"/"High School" (e.g., 9-12, 10-12)?
     #    - How to represent combined levels (e.g., "K-8", "K-12")?
     #    - Handle non-standard grade notations (e.g., "m" for Maternelle, "pre-k")?
-    renamed_df["MASTERPROPERTIES_SCHOOLLEVEL"] = "TODO: Define Canadian School Level" # Placeholder
+    renamed_df["MASTERPROPERTIES_SCHOOLLEVEL"] = ""  # Set to blank as requested
 
     # MASTERPROPERTIES_STARTYEARSTATUSCODE
     # TODO: Define mapping from FOCUS_STATUS or other fields to this status code.
-    # Ambiguity Questions:
-    # 1. Are values in FOCUS_STATUS (e.g., "Active", "Inactive") directly equivalent/mappable?
-    # 2. Is there another ODEF/FOCUS field better representing operational status?
-    if "FOCUS_STATUS" in renamed_df.columns:
-         renamed_df["MASTERPROPERTIES_STARTYEARSTATUSCODE"] = renamed_df["FOCUS_STATUS"] + " (TODO: Review Mapping)" # Temp use
-    else:
-        renamed_df["MASTERPROPERTIES_STARTYEARSTATUSCODE"] = "TODO: Review FOCUS_STATUS Mapping"
+    # Questions for user:
+    # 1. Are values in FOCUS_STATUS (e.g., "Active", "Inactive") directly equivalent/mappable for this target field?
+    # 2. Is there another ODEF/FOCUS field better representing operational status for this specific target?
+    renamed_df["MASTERPROPERTIES_STARTYEARSTATUSCODE"] = ""  # Set to blank as requested
 
     # MASTERPROPERTIES_SCHOOLYEAR
     # TODO: Determine source for academic School Year.
-    # Ambiguity Questions:
+    # Questions for user:
     # 1. Is there a field in canada_schools.csv (ODEF/FOCUS) for academic school year (e.g., "2023-2024")?
     #    (ODEF_date_updated is record update timestamp, not academic year).
-    # 2. If not, leave blank, or populate from filename, parameter, or processing date?
-    renamed_df["MASTERPROPERTIES_SCHOOLYEAR"] = "TODO: Define School Year Source" # Placeholder
+    # 2. If not, should this be left blank, or populated from filename, a script parameter, or processing date?
+    renamed_df["MASTERPROPERTIES_SCHOOLYEAR"] = ""  # Set to blank as requested
 
-    # MASTERPROPERTIES_ID (from add_on_existing_db_ids)
-    # Decision: Ignore and keep blank for now.
-    renamed_df["MASTERPROPERTIES_ID"] = ""
+    # MASTERPROPERTIES_ADDRESS_ADDRESSLINE2
+    # TODO: Review this logic based on actual data quality and business rules for Address Line 2.
+    # Previous logic (get_address_line2) is removed as per request to keep it null/TODO here.
+    # User decision: "keep it null and keep the comments, TODO"
+    renamed_df["MASTERPROPERTIES_ADDRESS_ADDRESSLINE2"] = ""  # Set to blank as requested
 
-    # IDs generation
+    # MASTERPROPERTIES_ID
+    renamed_df["MASTERPROPERTIES_ID"] = ""  # Kept blank as per decision
+
     renamed_df["MASTERPROPERTIES_ID_1"] = renamed_df.apply(
         lambda row: f"{get_random_four_digits()}-{get_random_four_digits()}-{get_random_four_digits()}", axis=1)
-
-    # MASTERPROPERTIES_ID_2 is skipped because MASTERPROPERTIES_SCHOOLTYPE is skipped.
-    # If SCHOOLTYPE is implemented, uncomment and adapt the following:
-    # school_type_to_code_canada = { ... } # Define this mapping
-    # renamed_df["MASTERPROPERTIES_ID_2"] = renamed_df.apply(
-    # lambda row: f"CA{school_type_to_code_canada.get(row.get('MASTERPROPERTIES_SCHOOLTYPE', 'Unknown'), 'XX')}-{row['MASTERPROPERTIES_ID_1'][5:9]}-{row['MASTERPROPERTIES_ID_1'][10:14]}",
-    # axis=1)
-    renamed_df["MASTERPROPERTIES_ID_2"] = "TODO: Depends on School Type" # Placeholder
-
 
     # --- XREF Fields ---
     renamed_df["XREF_SOURCESYSTEM1"] = "odef"
     renamed_df["XREF_KEYNAME1"] = "ODEF_unique_id"
-    renamed_df["XREF_VALUE1"] = renamed_df.get("MASTERPROPERTIES_GOVTSCHOOLID", "") # From ODEF_unique_id
+    renamed_df["XREF_VALUE1"] = renamed_df.get("MASTERPROPERTIES_GOVTSCHOOLID", "")
 
     renamed_df["XREF_SOURCESYSTEM2"] = "focus_classic"
     renamed_df["XREF_KEYNAME2"] = "focus_id"
-    renamed_df["XREF_VALUE2"] = renamed_df.get("FOCUS_ID", "") # Mapped from FOCUS_SCHOOL_ID
+    renamed_df["XREF_VALUE2"] = renamed_df.get("FOCUS_ID", "")
 
     # XREF3 - Skipped, marked for review
     # TODO: Review if XREF3 is needed.
-    # Other potential ODEF IDs for XREF: ODEF_source_id, ODEF_dguid.
-    renamed_df["XREF_SOURCESYSTEM3"] = "" #"TODO: Review XREF3"
+    # Consider if other ODEF identifiers like ODEF_source_id or ODEF_dguid should be captured here.
+    renamed_df["XREF_SOURCESYSTEM3"] = ""
     renamed_df["XREF_KEYNAME3"] = ""
     renamed_df["XREF_VALUE3"] = ""
 
-
     # --- Relation Fields ---
-    renamed_df["RELATION_ENTITY1"] = "customer" # Assuming district is the customer
-    renamed_df["RELATION_TYPE1"] = "child"     # As per user decision
-    renamed_df["RELATION_ID1"] = renamed_df.get("MASTERPROPERTIES_GOVTSCHOOLDISTRICTID", "") # From authority_hash_12
-    renamed_df["RELATION_SOURCESYSTEM1"] = "odef" # Source system of the RELATION_ID1
-
+    renamed_df["RELATION_ENTITY1"] = "customer"
+    renamed_df["RELATION_TYPE1"] = "child"
+    renamed_df["RELATION_ID1"] = renamed_df.get("MASTERPROPERTIES_GOVTSCHOOLDISTRICTID", "")
+    renamed_df["RELATION_SOURCESYSTEM1"] = "odef"
 
     # --- Blank Technical Columns ---
     blank_technical_columns = [
@@ -226,10 +260,11 @@ def school_prettifier_canada_odef_v2(schools_file_path):
         "TECHNICALPROPERTIES_DELETEFLAG", "TECHNICALPROPERTIES_VERSION",
     ]
     for col in blank_technical_columns:
-        renamed_df[col] = ""
+        if col not in renamed_df.columns:
+            renamed_df[col] = ""
+        else:
+            renamed_df[col] = ""
 
-    # --- Final Column Order ---
-    # (Ensure all these columns exist in 'renamed_df' or are created as blank/placeholders)
     final_column_order = [
         "TECHNICALPROPERTIES_CREATESYSTEM", "TECHNICALPROPERTIES_CREATETIMESTAMP",
         "TECHNICALPROPERTIES_UPDATESYSTEM", "TECHNICALPROPERTIES_UPDATETIMESTAMP",
@@ -249,60 +284,54 @@ def school_prettifier_canada_odef_v2(schools_file_path):
         "XREF_SOURCESYSTEM1", "XREF_KEYNAME1", "XREF_VALUE1",
         "XREF_SOURCESYSTEM2", "XREF_KEYNAME2", "XREF_VALUE2",
         "XREF_SOURCESYSTEM3", "XREF_KEYNAME3", "XREF_VALUE3",
-        "RELATION_ENTITY1", "RELATION_TYPE1", "RELATION_ID1", "RELATION_SOURCESYSTEM1" # Added RELATION_SOURCESYSTEM1
+        "RELATION_ENTITY1", "RELATION_TYPE1", "RELATION_ID1", "RELATION_SOURCESYSTEM1"
     ]
 
-    # Add any missing columns from the final_column_order as blank strings before filtering
     for col in final_column_order:
         if col not in renamed_df.columns:
-            renamed_df[col] = "" # Or pd.NA as appropriate
+            renamed_df[col] = ""
 
     reordered_df = renamed_df.filter(items=final_column_order, axis=1)
     return reordered_df
 
+
 if __name__ == "__main__":
-    file_date_suffix = os.environ.get("FILE_DATE_SUFFIX", pd.Timestamp.now().strftime('%Y%m%d'))
-    input_can_file_path = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_schools.csv' # Ensure this file exists
-    output_can_file_path = f'outputs/schools/pretty_schools_canada_odef_v2_{file_date_suffix}.csv'
+    # --- Configuration ---
+    # !!! IMPORTANT: Set this to the correct path of your input CSV file !!!
+    input_can_file_path = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_schools.csv'  # Make sure this file is in the same directory or provide full path
 
-    os.makedirs('outputs/schools', exist_ok=True)
+    # Define output path
+    file_date_suffix = os.environ.get("FILE_DATE_SUFFIX", pd.Timestamp.now().strftime('%Y%m%d%H%M%S'))
+    output_directory = 'outputs/schools'
+    output_can_file_path = os.path.join(output_directory, f'pretty_schools_canada_odef_v4_{file_date_suffix}.csv')
 
+    # Create output directory if it doesn't exist
+    os.makedirs(output_directory, exist_ok=True)
+
+    print(f"Attempting to process Canadian schools file: '{input_can_file_path}'")
+
+    # Check if the input file exists before processing
     if not os.path.exists(input_can_file_path):
-        print(f"ERROR: Input file {input_can_file_path} not found. Please create it or provide the correct path.")
-        # Create a minimal dummy file if it doesn't exist, including newly referenced 'authority_hash_12'
-        print(f"Creating a minimal dummy file for {input_can_file_path} for script structure testing.")
-        dummy_data = {
-            "FOCUS_SCHOOL_ID": ["F100", "F101"], "ODEF_unique_id": ["ODEFCAN001", "ODEFCAN002"],
-            "authority_hash_12": ["AUTH#HASH1", "AUTH#HASH2"],
-            "ODEF_facility_name": ["Maple Elementary", "Pine Secondary"], "FOCUS_SCHOOL_NAME": ["Maple Elem.", ""],
-            "ODEF_authority_name": ["North District", "South District"], "FOCUS_SCHOOL_DISTRICT_NAME": ["", "South Dist."],
-            "ODEF_province_code": ["ON", "BC"], "FOCUS_STATE": ["", "BC"],
-            "ODEF_addressLocality": ["Ottawa", "Vancouver"], "FOCUS_CITY_NAME": ["", "Van"],
-            "ODEF_streetAddress": ["1 Main St", "100 West Rd"], "FOCUS_ADRRESS_1": ["", ""], # Typo matches example
-            "ODEF_postOfficeBoxNumber": [None, "PO Box 123"], "FOCUS_ADDRESS_2": ["Unit A", None],
-            "ODEF_postalCode": ["K1A0B1", "V6B5A3"], "FOCUS_POSTAL_CODE": ["", "V6B 5A3"],
-            "ODEF_Latitude": ["45.4215", "49.2827"], "ODEF_Longitude": ["-75.6972", "-123.1207"],
-            "FOCUS_ADDRESS_LATITUDE": [None, None], "FOCUS_ADDRESS_LONGITUDE": [None, None],
-            "FOCUS_SCHOOL_CODE": ["FS001", "FS002"],
-            # Fields for skipped sections (can be empty or have sample values)
-            "ODEF_min_grade": ["K","9"], "ODEF_max_grade": ["6","12"],
-            "FOCUS_STATUS": ["Active", "Inactive"]
-        }
-        pd.DataFrame(dummy_data).to_csv(input_can_file_path, index=False)
+        print(f"ERROR: Input file '{input_can_file_path}' not found.")
+        print("Please ensure the file exists in the correct location or update the path in the script.")
+        sys.exit(1)  # Exit script if input file is critical and not found
 
     try:
-        print(f"Processing Canadian schools file: {input_can_file_path}")
-        prettified_can_df = school_prettifier_canada_odef_v2(input_can_file_path)
+        prettified_can_df = school_prettifier_canada_odef_v4(input_can_file_path)
 
         if not prettified_can_df.empty:
             prettified_can_df.to_csv(output_can_file_path, index=False)
-            print(f"Successfully created Canadian prettified file: {output_can_file_path}")
-            print("\nFirst 5 rows of the Canadian prettified output:")
-            print(prettified_can_df.head())
+            print(f"Successfully created Canadian prettified file: '{output_can_file_path}'")
+            print(f"\nProcessed {len(prettified_can_df)} rows.")
+            # print("\nFirst 2 rows of the Canadian prettified output:")
+            # print(prettified_can_df.head(2))
+            # print("\nLast 2 rows of the Canadian prettified output:")
+            # print(prettified_can_df.tail(2))
         else:
             print("Processing resulted in an empty DataFrame. Please check for errors or input file issues.")
 
     except Exception as e:
-        print(f"An error occurred during Canadian school processing: {e}")
+        print(f"An critical error occurred during Canadian school processing: {e}")
         import traceback
+
         print(traceback.format_exc())
