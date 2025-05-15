@@ -297,16 +297,15 @@ def school_prettifier_canada_odef_v4(schools_file_path: str) -> pd.DataFrame:  #
 
 if __name__ == "__main__":
     # --- Configuration ---
-    # !!! IMPORTANT: Set this to the correct path of your input CSV file !!!
     input_can_file_path = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_schools.csv'  # Make sure this file is in the same directory or provide full path
 
     # Define output path
-    file_date_suffix = os.environ.get("FILE_DATE_SUFFIX", pd.Timestamp.now().strftime('%Y%m%d%H%M%S'))
-    output_directory = 'outputs/schools'
-    output_can_file_path = os.path.join(output_directory, f'pretty_schools_canada_odef_v4_{file_date_suffix}.csv')
+    # file_date_suffix = os.environ.get("FILE_DATE_SUFFIX", pd.Timestamp.now().strftime('%Y%m%d%H%M%S'))
+    output_directory = '/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/processed/'
+    output_can_file_path = os.path.join(output_directory, f'pretty_schools_canada_odef_v4.csv')
 
-    # Create output directory if it doesn't exist
-    os.makedirs(output_directory, exist_ok=True)
+    # # Create output directory if it doesn't exist
+    # os.makedirs(output_directory, exist_ok=True)
 
     print(f"Attempting to process Canadian schools file: '{input_can_file_path}'")
 

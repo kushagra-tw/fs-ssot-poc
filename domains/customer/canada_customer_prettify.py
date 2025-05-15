@@ -50,7 +50,7 @@ def odef_customer_prettifier_v2(customer_file_path):
     renamed["MASTERPROPERTIES_ADDRESS_COUNTRY"] = "CAN"
 
     # XREF Fields - updated to use authority_hash_12
-    renamed["XREF_SOURCESYSTEM1"] = "ODEF"
+    renamed["XREF_SOURCESYSTEM1"] = "odef"
     renamed["XREF_KEYNAME1"] = "authority_hash_12" # Key name is the hash column
     renamed["XREF_VALUE1"] = odef_data["authority_hash_12"]
 
