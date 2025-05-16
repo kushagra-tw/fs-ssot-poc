@@ -36,8 +36,7 @@ def odef_customer_prettifier_v2(customer_file_path):
     # Direct Mappings from ODEF to Target
     renamed["MASTERPROPERTIES_NAME"] = odef_data["ODEF_authority_name"]
     renamed["MASTERPROPERTIES_ADDRESS_STATEPROVINCE"] = odef_data["ODEF_province_code"]
-    # Use authority_hash_12 as the primary ID
-    renamed["MASTERPROPERTIES_ID"] = odef_data["authority_hash_12"]
+    renamed["MASTERPROPERTIES_ID"] = ''
     # New mapping for GOVTSCHOOLDISTRICTID
     renamed["MASTERPROPERTIES_GOVTSCHOOLDISTRICTID"] = odef_data["authority_hash_12"]
 
@@ -97,7 +96,7 @@ def odef_customer_prettifier_v2(customer_file_path):
     # Ensure order of columns is as per the original script (with the renamed column)
     reordered = renamed.filter(items=target_columns)
 
-    print(reordered.head())
+    # print(reordered.head())
     return reordered
 
 # Example of how to call this new function:

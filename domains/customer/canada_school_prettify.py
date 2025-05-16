@@ -232,7 +232,7 @@ def school_prettifier_canada_odef_v4(schools_file_path: str) -> pd.DataFrame:  #
 
     # --- XREF Fields ---
     renamed_df["XREF_SOURCESYSTEM1"] = "odef"
-    renamed_df["XREF_KEYNAME1"] = "ODEF_unique_id"
+    renamed_df["XREF_KEYNAME1"] = "odef_unique_id"
     renamed_df["XREF_VALUE1"] = renamed_df.get("MASTERPROPERTIES_GOVTSCHOOLID", "")
 
     renamed_df["XREF_SOURCESYSTEM2"] = "focus_classic"
