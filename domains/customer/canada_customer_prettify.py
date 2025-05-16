@@ -6,7 +6,7 @@ import numpy as np # For np.nan if truly null values are desired over empty stri
 
 def odef_customer_prettifier_v2(customer_file_path):
     # Assuming read_data can handle CSVs directly or it's a pandas DataFrame
-    odef_data = pd.read_csv(customer_file_path)
+    odef_data = pd.read_csv(customer_file_path, encoding='utf-8-sig')
 
     # Clean up column names if necessary (e.g., remove leading/trailing spaces)
     odef_data.columns = odef_data.columns.str.strip()
@@ -51,7 +51,7 @@ def odef_customer_prettifier_v2(customer_file_path):
 
     # XREF Fields - updated to use authority_hash_12
     renamed["XREF_SOURCESYSTEM1"] = "odef"
-    renamed["XREF_KEYNAME1"] = "authority_hash_12" # Key name is the hash column
+    renamed["XREF_KEYNAME1"] = "authority_hash" # Key name is the hash column
     renamed["XREF_VALUE1"] = odef_data["authority_hash_12"]
 
     # Relation Fields - updated to use authority_hash_12
@@ -103,4 +103,4 @@ def odef_customer_prettifier_v2(customer_file_path):
 # Example of how to call this new function:
 # Make sure 'canada_customers_None.csv' is in the correct path and has the 'authority_hash_12' column
 odef_customer_prettifier_v2('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_customers_None.csv') \
-.to_csv('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/processed/pretty_canada_customers_v2.csv', index=False)
+.to_csv('/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/processed/pretty_canada_customers_v2.csv', index=False, encoding='utf-8')

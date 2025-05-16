@@ -109,7 +109,7 @@ def school_prettifier_canada_odef_v4(schools_file_path: str) -> pd.DataFrame:  #
     :return: A pandas DataFrame with the prettified school data.
     """
     try:
-        canada_data = pd.read_csv(schools_file_path, low_memory=False, dtype=str)
+        canada_data = pd.read_csv(schools_file_path, low_memory=False, dtype=str, encoding='utf-8-sig')
         canada_data.columns = canada_data.columns.str.strip()
         for col in canada_data.select_dtypes(include=['object']).columns:
             canada_data[col] = canada_data[col].str.strip()
@@ -319,7 +319,7 @@ if __name__ == "__main__":
         prettified_can_df = school_prettifier_canada_odef_v4(input_can_file_path)
 
         if not prettified_can_df.empty:
-            prettified_can_df.to_csv(output_can_file_path, index=False)
+            prettified_can_df.to_csv(output_can_file_path, index=False, encoding='utf-8')
             print(f"Successfully created Canadian prettified file: '{output_can_file_path}'")
             print(f"\nProcessed {len(prettified_can_df)} rows.")
             # print("\nFirst 2 rows of the Canadian prettified output:")

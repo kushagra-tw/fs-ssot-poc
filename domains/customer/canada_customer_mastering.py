@@ -20,4 +20,4 @@ distinct_customers_df = schools_df[[ "FOCUS_SCHOOL_DISTRICT_ID","authority_hash_
 # # ,"ODEF_province_code"
 print(distinct_customers_df)
 
-distinct_customers_df.to_csv(f'/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_customers_{os.environ.get("FILE_DATE_SUFFIX")}.csv')
+distinct_customers_df.to_csv(f'/Users/kirtanshah/PycharmProjects/fs-ssot-poc/customer/data/interim/canada_customers_{os.environ.get("FILE_DATE_SUFFIX")}.csv', encoding='utf-8-sig')
